@@ -1,0 +1,6 @@
+### C gitignore for the PA1 ###
+
+# Binaries
+*.out
+
+
