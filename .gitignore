@@ -1,0 +1,11 @@
+### C gitignore for the PA1 ###
+
+# Executables 
+**.out
+**.exe
+
+# Zip, Tgz , compressed files
+**.tgz
+
+# Test files
+**/test
