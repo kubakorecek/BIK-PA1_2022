@@ -87,4 +87,6 @@ int main ( int arg, char ** args )
         printf("%c", hexRepresentation[i]);
     }
     printf("\n");
+
+    return SUCCES_RUN;
 }
