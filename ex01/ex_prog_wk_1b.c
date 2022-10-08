@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 #define FAILURE 1
 #define SUCCES_RUN 0
 
@@ -8,110 +9,156 @@
 #define MAX_H 23
 #define MIN 0
 
-
-
-
-void errorMessage( int inputCode ) 
+void errorMessage(int const inputCode)
 {
-    if((inputCode == 0))
+    if ((inputCode == 0))
     {
         printf("Nespravny vstup.\n");
         return;
     }
-    printf("Nespravny vstup. at %d", inputCode);     
+    printf("Nespravny vstup. at %d \n", inputCode);
 }
 
-int calcTime(int * hours, int * minutes, int * seconds)
+int calcTime(int const *hours, int const *minutes, int const *seconds, int const *miliseconds)
 {
-    return *hours * 600 + *minutes * 60 + *seconds * 60;
+    return *hours * 3600000 + *minutes * 60000 + *seconds * 1000 + *miliseconds;
 }
 
-void startMessage( int timeCode ) 
+void deCalcTime(int const *timeInMiliseconds, int *hours, int *minutes, int *seconds, int *miliseconds)
 {
-    printf("Zadejte cas t%d:\n", timeCode);     
+    *miliseconds = (*timeInMiliseconds % 1000);
+    *seconds = (*timeInMiliseconds / 1000);
+    *minutes = (*seconds / 60);
+    *hours = (*minutes / 60);
+
+    *seconds %= 60;
+    *minutes %= 60;
+    *hours %= 24;
 }
 
-
-int readTime(int * hours, int * minutes, int * seconds, int * miliseconds)
+int checkBoundary(int const *number, int const max, int const min)
 {
-        if((scanf(" %d : %d : %d , %d ",hours, minutes,seconds, miliseconds) != 4) )
+    if (*number > max || *number < min)
     {
-        errorMessage(0);
         return FAILURE;
-    } 
-
-        if (*hours > MAX_H || *hours < MIN)
-    {
-       errorMessage(0);
-       return FAILURE; 
-    }
-    if (*minutes > MAX_MIN || *minutes < MIN)
-    {
-       errorMessage(0);
-       return FAILURE; 
-    }
-    if (*seconds > MAX_SEC || *seconds < MIN)
-    {
-       errorMessage(0);
-       return FAILURE; 
-    }
-    if (*miliseconds > MAX_MIL || *miliseconds < MIN)
-    {
-       errorMessage(0);
-       return FAILURE; 
     }
     return SUCCES_RUN;
 }
 
-int main ( int arg, char ** args )
+void startMessage(int const timeCode)
+{
+    printf("Zadejte cas t%d:\n", timeCode);
+}
+
+int readTime(int *hours, int *minutes, int *seconds, int *miliseconds)
+{
+    if ((scanf(" %d : %d :%d , %d ", hours, minutes, seconds, miliseconds) != 4))
+    {
+
+        errorMessage(0);
+        return FAILURE;
+    }
+    if (checkBoundary(hours, MAX_H, MIN) || checkBoundary(minutes, MAX_MIN, MIN) ||
+        checkBoundary(seconds, MAX_SEC, MIN) || checkBoundary(miliseconds, MAX_MIL, MIN))
+
+    {
+        errorMessage(0);
+        return FAILURE;
+    }
+
+    return SUCCES_RUN;
+}
+
+int main(int arg, char **args)
 {
     int hours, minutes, seconds, miliseconds;
 
     int hours2, minutes2, seconds2, miliseconds2;
 
-    int hoursDiff, minutesDiff, secondsDiff, milisecondsDiff;
+    hours = 7;
+    minutes = 15;
+    seconds = 0;
+    miliseconds = 0;
+    int result = calcTime(&hours, &minutes, &seconds, &miliseconds);
 
+    assert(result == 26100000);
 
+    deCalcTime(&result, &hours2, &minutes2, &seconds2, &miliseconds2);
 
-    startMessage( 1 ); 
-    readTime(&hours, &minutes, &seconds, &miliseconds);
+    assert(hours2 == 7);
 
-    startMessage( 2 ); 
-    readTime(&hours2, &minutes2, &seconds2, &miliseconds2);
+    assert(minutes2 == 15);
 
+    assert(seconds2 == 0);
 
+    assert(miliseconds2 == 0);
 
+    int timeDiff;
 
-    hoursDiff = hours2-hours;
-    minutesDiff = minutes2-minutes;
-    secondsDiff = seconds2-seconds;
-    milisecondsDiff = miliseconds2-miliseconds;
-
-    printf("%d:",hoursDiff);
-    if(minutesDiff < 10)
+    startMessage(1);
+    if (readTime(&hours, &minutes, &seconds, &miliseconds) == FAILURE)
     {
-        printf("0%d:",minutesDiff);
-    }else 
+        return SUCCES_RUN;
+    };
+
+    startMessage(2);
+    if (readTime(&hours2, &minutes2, &seconds2, &miliseconds2) == FAILURE)
     {
-       printf("%d:",minutesDiff); 
+        return SUCCES_RUN;
+    };
+
+    int time1 = calcTime(&hours, &minutes, &seconds, &miliseconds);
+    int time2 = calcTime(&hours2, &minutes2, &seconds2, &miliseconds2);
+
+    timeDiff = time2 - time1;
+
+    if (timeDiff < 0)
+    {
+        errorMessage(0);
+        return SUCCES_RUN;
     }
-    if(secondsDiff < 10)
-    {
-        printf("0%d:",secondsDiff);
-    }else 
-    {
-       printf("%d:",secondsDiff); 
-    }
 
-    if(milisecondsDiff < 10)
+    deCalcTime(&timeDiff, &hours2, &minutes2, &seconds2, &miliseconds2);
+
+    if(hours2 < 10)
     {
-        printf("00%d:",milisecondsDiff);
-    }else if (milisecondsDiff <100)
+            printf("Doba:  ");
+    }else {
+            printf("Doba: ");
+    }
+    
+
+    printf("%d:", hours2);
+
+    if (minutes2 < 10)
     {
-       printf("0%d:",milisecondsDiff); 
-    }else 
+        
+        printf("0%d:", minutes2);
+    }
+    else
     {
-       printf("%d:",milisecondsDiff); 
+        
+        printf("%d:", minutes2);
+    }
+    if (seconds2 < 10)
+    {
+        printf("0%d,", seconds2);
+    }
+    else
+    {
+        printf("%d,", seconds2);
+    }
+    if (miliseconds2 < 10)
+    {
+        printf("00%d", miliseconds2);
+    }
+    else if (miliseconds2 < 100)
+    {
+        printf("0%d", miliseconds2);
+    }
+    else
+    {
+        printf("%d", miliseconds2);
     }
     printf("\n");
 }
