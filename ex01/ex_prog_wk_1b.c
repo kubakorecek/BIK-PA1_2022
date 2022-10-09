@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #define FAILURE 1
+#define NEG_FAILURE -1
 #define SUCCES_RUN 0
 
 #define MAX_MIL 999
@@ -50,14 +51,40 @@ void startMessage(int const timeCode)
     printf("Zadejte cas t%d:\n", timeCode);
 }
 
+int convertCharToDigit(const char c)
+{
+    int result = ((int)c - (int)'0');
+    if ((result < 0) || (result > 9))
+    {
+        return NEG_FAILURE;
+    }
+
+    return result;
+}
+
 int readTime(int *hours, int *minutes, int *seconds, int *miliseconds)
 {
-    if ((scanf(" %d : %d :%d , %d ", hours, minutes, seconds, miliseconds) != 4))
+    char tmpMilisecondsArray[4] = {'0', '0', '0', '\0'};
+    int ret = scanf(" %d : %d :%d , %3s", hours, minutes, seconds, tmpMilisecondsArray);
+    if ((ret != 4))
     {
 
         errorMessage(0);
         return FAILURE;
     }
+    for (int j = 0; j < 3; j++)
+    {
+        if (convertCharToDigit(tmpMilisecondsArray[0]) == NEG_FAILURE)
+        {
+            errorMessage(0);
+            return FAILURE;
+        }
+    }
+
+    *miliseconds = ((convertCharToDigit(tmpMilisecondsArray[0]) * 100) +
+                    (convertCharToDigit(tmpMilisecondsArray[1]) * 10) +
+                    (convertCharToDigit(tmpMilisecondsArray[2])));
+
     if (checkBoundary(hours, MAX_H, MIN) || checkBoundary(minutes, MAX_MIN, MIN) ||
         checkBoundary(seconds, MAX_SEC, MIN) || checkBoundary(miliseconds, MAX_MIL, MIN))
 
@@ -94,7 +121,6 @@ int main(int arg, char **args)
     assert(miliseconds2 == 0);
 
     int timeDiff;
-
     startMessage(1);
     if (readTime(&hours, &minutes, &seconds, &miliseconds) == FAILURE)
     {
@@ -119,46 +145,6 @@ int main(int arg, char **args)
     }
 
     deCalcTime(&timeDiff, &hours2, &minutes2, &seconds2, &miliseconds2);
-
-    if(hours2 < 10)
-    {
-            printf("Doba:  ");
-    }else {
-            printf("Doba: ");
-    }
-    
-
-    printf("%d:", hours2);
-
-    if (minutes2 < 10)
-    {
-        
-        printf("0%d:", minutes2);
-    }
-    else
-    {
-        
-        printf("%d:", minutes2);
-    }
-    if (seconds2 < 10)
-    {
-        printf("0%d,", seconds2);
-    }
-    else
-    {
-        printf("%d,", seconds2);
-    }
-    if (miliseconds2 < 10)
-    {
-        printf("00%d", miliseconds2);
-    }
-    else if (miliseconds2 < 100)
-    {
-        printf("0%d", miliseconds2);
-    }
-    else
-    {
-        printf("%d", miliseconds2);
-    }
+    printf("Doba:%3d:%02d:%02d,%03d", hours2, minutes2, seconds2, miliseconds2);
     printf("\n");
 }
