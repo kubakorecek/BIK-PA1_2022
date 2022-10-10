@@ -6,33 +6,34 @@
 
 int main(void)
 {
-    int sentence=0;
+    int sentence = 0;
     int ret = 0;
 
     char buffer[BUFFER] = {'\0'};
 
     printf("ml' nob:\n");
 
-    if ((scanf("%s", buffer) != 1 ))   
-    {   
+    if ((scanf("%s", buffer) != 1))
+    {
         sentence = -1;
-    }  
+    }
     for (int j = 0; j < BUFFER; j++)
     {
-        if((buffer[j] == '0' && buffer[0] == '0') || buffer[j] =='\0')
+        if ((buffer[j] == '0' && buffer[0] == '0') || buffer[j] == '\0')
         {
-
-        }else 
+        }
+        else
         {
-                ret++;
-                sentence = buffer[j] - '0';
+            ret++;
+            sentence = buffer[j] - '0';
         }
     }
 
-    if((ret == 1) && (sentence < 10 && sentence > 0))
+    if ((ret == 1) && (sentence < 10 && sentence > 0))
     {
         printf("Qapla'\n");
-    }else 
+    }
+    else
     {
         sentence = -1;
     }
