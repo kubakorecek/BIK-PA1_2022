@@ -26,6 +26,10 @@ int main(void)
         {
             ret++;
             sentence = buffer[j] - '0';
+            if ( ret > 1)
+            {
+                break;
+            }
         }
     }
 
