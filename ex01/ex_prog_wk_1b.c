@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
+
 #define FAILURE 1
 #define NEG_FAILURE -1
 #define SUCCES_RUN 0
+#define BUFFER 4
 
 #define MAX_MIL 999
 #define MAX_SEC 59
@@ -64,26 +67,39 @@ int convertCharToDigit(const char c)
 
 int readTime(int *hours, int *minutes, int *seconds, int *miliseconds)
 {
-    char tmpMilisecondsArray[4] = {'0', '0', '0', '\0'};
-    int ret = scanf(" %d : %d :%d , %3s", hours, minutes, seconds, tmpMilisecondsArray);
-    if ((ret != 4))
+    char tmpMilisecondsArray[BUFFER] = {'\0'};
+    int ret = scanf(" %d : %d :%d , %4s", hours, minutes, seconds, tmpMilisecondsArray);
+    if ((ret != 4) || tmpMilisecondsArray[3] != '\0')
     {
 
         errorMessage(0);
         return FAILURE;
     }
-    for (int j = 0; j < 3; j++)
+    int len = strlen(tmpMilisecondsArray);
+    for (int j = 0; j < len; j++)
     {
-        if (convertCharToDigit(tmpMilisecondsArray[0]) == NEG_FAILURE)
+
+        if (convertCharToDigit(tmpMilisecondsArray[j]) == NEG_FAILURE)
         {
             errorMessage(0);
             return FAILURE;
         }
-    }
+        switch (j)
+        {
+        case 0:
+            *miliseconds += convertCharToDigit(tmpMilisecondsArray[j]) * 100;
+            break;
+        case 1:
+            *miliseconds += convertCharToDigit(tmpMilisecondsArray[j]) * 10;
+            break;
+        case 2:
+            *miliseconds += convertCharToDigit(tmpMilisecondsArray[j]);
+            break;
 
-    *miliseconds = ((convertCharToDigit(tmpMilisecondsArray[0]) * 100) +
-                    (convertCharToDigit(tmpMilisecondsArray[1]) * 10) +
-                    (convertCharToDigit(tmpMilisecondsArray[2])));
+        default:
+            break;
+        }
+    }
 
     if (checkBoundary(hours, MAX_H, MIN) || checkBoundary(minutes, MAX_MIN, MIN) ||
         checkBoundary(seconds, MAX_SEC, MIN) || checkBoundary(miliseconds, MAX_MIL, MIN))
