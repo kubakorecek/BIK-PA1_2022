@@ -34,39 +34,55 @@ int readInterestRate(const char *type)
     return interestRate100;
 }
 
-int changeBalance(int balance, int interestRate)
+double changeBalance(double balance, double interestRate)
 {
-    if (balance < 0)
+    //int trasactionTruncate =((int)((balance * interestRate) * 100.0))/100;
+    
+    /*if (balance < 0)
     {
-        return balance -= (balance * interestRate);
-    }
-    return balance += (balance * interestRate);
+        printf("BAL:%f ret %f\n", balance, -(balance * interestRate));
+        return  (balance * interestRate);
+    }*/
+    return  (balance * interestRate);
+}
+
+double truncate(double input)
+{
+    int tmp = (int)(input * 100.0);
+    return ((double)tmp) / 100.0;
 }
 
 int main(void)
 {
     int creditInterest = readInterestRate("kreditni");
-    int debitInterest = readInterestRate("debetni");
+
     if (creditInterest == FAIL)
     {
         return 0;
     }
+    int debitInterest = readInterestRate("debetni");
     if (debitInterest == FAIL)
     {
         return 0;
     }
-    int accountBalance = 0;
+    //int accountBalance = 0;
     printf("Zadejte transakce:\n");
-    int days[DAYS] = {0};
-    int day, trasaction10000, balance, interestRate;
-    double trasaction;
+    //int days[DAYS] = {0};
+    int day;//, trasactionTruncate;
+    double trasaction , credit, debit, balance, interestRate;
+
+
     int dayPrev = 0;
     balance = 0;
+    credit = (double)creditInterest / 10000.0;
+    debit = (double)debitInterest / 10000.0;
+
    while ((scanf(" %d , %lf ", &day, &trasaction) == 2))
     {
-         printf("pdyw %d %f\n" , balance,trasaction);
-        balance +=((int)(trasaction * 100.0))/100;
-        printf("pdw %d %f\n" , balance,trasaction);
+         //printf("pdyw %d %d %f\n" ,day, balance,trasaction);
+        //trasactionTruncate =((int)(trasaction * 100.0));
+       
+        //printf("pdw %d %f\n" , balance,trasaction);
         if (dayPrev >= day && (day !=0))
         {
             errorMessage(0);
@@ -74,18 +90,22 @@ int main(void)
         }
         for (int j = dayPrev; j < day; j++)
         {
-            interestRate = creditInterest;
+            interestRate = credit;
             if (balance < 0)
             {
-                interestRate = debitInterest;
+                interestRate = debit;
             }
-            balance += changeBalance(balance, interestRate);
+            balance += truncate(changeBalance(balance, interestRate));
+            //printf("pd %d %f %f %f\n" , j, balance, trasaction, interestRate);
+        
         }
+        balance +=truncate(trasaction);
+        dayPrev = day;
         if (trasaction == 0)
         {
             break;
         }
     }
-    printf("pd %d\n" , balance);
+    printf("Zustatek: %.2f\n" , balance);
     return 0;
 }
