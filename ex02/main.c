@@ -9,41 +9,41 @@
 #define FIRST_LAST_LINE '-'
 
 
-void PrintTopBottom(const int boadSize, const int numberOfFieldsCol)
+void errorMessage( int inputCode ) 
+{
+    if((inputCode == 0))
+    {
+        printf("Nespravny vstup.\n");
+        return;
+    }
+    printf("Nespravny vstup. at %d", inputCode);     
+}
+
+void PrintTopBottom(const int boardSize, const int numberOfFieldsCol)
 {
     printf("%c", CORNERS);
-    for (int col = 0; col < boadSize * numberOfFieldsCol; col++ )
+    for (int col = 0; col < boardSize * numberOfFieldsCol; col++ )
     {
         printf("%c", FIRST_LAST_LINE);
     }
     printf("%c\n", CORNERS);
 }
 
-
-void PrintBoard(const int boadSize, const int numberOfFieldsRow,const int numberOfFieldsCol )
+void PrintBoard(const int boardSize, const int numberOfFieldsRow, const int numberOfFieldsCol)
 {
-    PrintTopBottom(boadSize,numberOfFieldsCol);
+    PrintTopBottom(boardSize,numberOfFieldsCol);
     int mainRow = 0;
-    
-    // going over all rows
-    for(mainRow = 0;mainRow<boadSize; mainRow++)
+    for(mainRow = 0;mainRow<boardSize; mainRow++)
     {
        
-            for(int row = 0; row < numberOfFieldsCol;row++)
+            for(int row = 0; row < numberOfFieldsRow;row++)
             {
                 printf("%c", SIDES); 
-               for(int mainCol = 0; mainCol < boadSize; mainCol++)
+               for(int mainCol = 0; mainCol < boardSize; mainCol++)
                {
                    
                    for (int col = 0; col < numberOfFieldsCol ; col++)
                     {
-                       // if(mainCol ==3 && mainRow ==0)
-                       // {
-                           // printf("%c", 'W');
-                       // }
-
-
-
                           if(mainRow % 2 == mainCol % 2){
                         printf("%c", ' ');
                     }else{
@@ -58,7 +58,7 @@ void PrintBoard(const int boadSize, const int numberOfFieldsRow,const int number
    
     }
 
-    PrintTopBottom(boadSize,numberOfFieldsCol);
+    PrintTopBottom(boardSize,numberOfFieldsCol);
 }
 
 
@@ -69,18 +69,31 @@ void PrintBoard(const int boadSize, const int numberOfFieldsRow,const int number
 int main(void)
 {
 
-    PrintBoard(5,5,5);
+    /*PrintBoard(5,5,5);
     PrintBoard(5, 4,4);
     PrintBoard(4, 4,4);
 
     PrintBoard(3, 3,3);
     PrintBoard(2, 3,3);
-    PrintBoard(3, 2,2);
+    PrintBoard(3, 2,2);*/
 
+    int numberOfFields;
+    int sizeOfField;
 
-//short int x = -0x197b; /* !!! short */
-short int x = -0xab; /* !!! short */
+    printf("Zadejte pocet poli:\n");
+    if((scanf("%d",&numberOfFields ) != 1) || (numberOfFields < 1))
+    {
+        errorMessage(0);
+        return SUCCESS_RUN;
+    }
+    printf("Zadejte velikost pole:\n");
+    if((scanf("%d",&sizeOfField ) != 1) || (sizeOfField < 1))
+    {
+        errorMessage(0);
+        return SUCCESS_RUN;
+    }
 
-printf ( "%x", x );
+    PrintBoard(numberOfFields, sizeOfField, sizeOfField);
+
     return SUCCESS_RUN;
 }
