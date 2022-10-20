@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <limits.h>
-
+#include <float.h>
+#include <math.h>
 #define FAIL INT_MIN
-#define DAYS 1000000
 
 /*float original = 4.48;
 
@@ -21,7 +21,7 @@ void errorMessage(int const inputCode)
     printf("Nespravny vstup. at %d \n", inputCode);
 }
 
-int readInterestRate(const char *type)
+long int readInterestRate(const char *type)
 {
     printf("Zadejte %s urok [%%]:\n",type);
     double interestRate;
@@ -30,8 +30,20 @@ int readInterestRate(const char *type)
         errorMessage(0);
         return FAIL;
     }
-    int interestRate100 = (interestRate * 100.0);
+    long int interestRate100 = (interestRate * 100);
     return interestRate100;
+}
+
+double readInterestRateDouble(const char *type)
+{
+    printf("Zadejte %s urok [%%]:\n",type);
+    double interestRate;
+    if ((scanf("%lf", &interestRate) != 1))
+    {
+        errorMessage(0);
+        return FAIL;
+    }
+    return interestRate;
 }
 
 double changeBalance(double balance, double interestRate)
@@ -54,13 +66,15 @@ double truncate(double input)
 
 int main(void)
 {
-    int creditInterest = readInterestRate("kreditni");
+    //long int creditInterest = readInterestRate("kreditni");
+    double creditInterest = readInterestRateDouble("kreditni");
 
     if (creditInterest == FAIL)
     {
         return 0;
     }
-    int debitInterest = readInterestRate("debetni");
+    //long int debitInterest = readInterestRate("debetni");
+    double debitInterest = readInterestRateDouble("debetni");
     if (debitInterest == FAIL)
     {
         return 0;
@@ -74,16 +88,20 @@ int main(void)
 
     int dayPrev = 0;
     balance = 0;
-    credit = (double)creditInterest / 10000.0;
-    debit = (double)debitInterest / 10000.0;
-
-   while ((scanf(" %d , %lf ", &day, &trasaction) == 2))
+    //credit = (double)creditInterest / 10000.0;
+    //debit = (double)debitInterest / 10000.0;
+    credit = creditInterest/100.0 ;
+    debit = debitInterest /100.0;
+    char c;
+    int check;
+   while (((check= scanf(" %d %c %lf", &day,&c, &trasaction)) == 3) && check != EOF)
     {
          //printf("pdyw %d %d %f\n" ,day, balance,trasaction);
         //trasactionTruncate =((int)(trasaction * 100.0));
        
-        //printf("pdw %d %f\n" , balance,trasaction);
-        if (dayPrev >= day && (day !=0))
+        //printf("pdw %d %f %c ff %d\n" , day,trasaction, c, check);
+        //printf("day %d prev %d\n" , dayPrev,day);
+        if ((dayPrev >= day && (day !=0)) || ((day == 0) && (dayPrev > day)) || c !=',')
         {
             errorMessage(0);
             return FAIL;
@@ -101,11 +119,18 @@ int main(void)
         }
         balance +=truncate(trasaction);
         dayPrev = day;
-        if (trasaction == 0)
+        if (fabs(trasaction - 0.0) <= 1e4 * DBL_EPSILON * (fabs(0) + fabs(trasaction)))
         {
+            check = EOF;
             break;
         }
     }
+    if (check != EOF)
+    {
+            errorMessage(0);
+            return FAIL;
+    }
+    //printf("pdw %d %f %c ff %c\n" , day,trasaction, c, cc);
     printf("Zustatek: %.2f\n" , balance);
     return 0;
 }
