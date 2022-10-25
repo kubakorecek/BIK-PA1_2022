@@ -69,14 +69,6 @@ void PrintBoard(const int boardSize, const int numberOfFieldsRow, const int numb
 int main(void)
 {
 
-    /*PrintBoard(5,5,5);
-    PrintBoard(5, 4,4);
-    PrintBoard(4, 4,4);
-
-    PrintBoard(3, 3,3);
-    PrintBoard(2, 3,3);
-    PrintBoard(3, 2,2);*/
-
     int numberOfFields;
     int sizeOfField;
 
