@@ -47,11 +47,8 @@ int main(void)
         errorMessage(0);
         return 0;
     }
-    if (! ((op == '+') || (op == '-')|| (op == '*')|| (op == '/')))
-        {
-        errorMessage(0);
-        return 0;
-    }
+
+
     switch (op)
     {
     case '+':
@@ -65,6 +62,10 @@ int main(void)
         break;
     case '/':
         result = trunc(firstNumber / secondNumber);
+        break;
+    default:
+        errorMessage(0);
+        return 0;
         break;
 
     }
