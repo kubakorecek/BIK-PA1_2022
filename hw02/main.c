@@ -46,12 +46,12 @@ int isPrimeTrial( int number)
         if((number % i ) == 0)
         {return FALSE;}
     }
-    printf("is PRIME %d\n",number);
+   // printf("is PRIME %d\n",number);
     return TRUE;
 }
 
 
-void getDivisors(const int number, int * n)
+void getDivisors(const int number, int * n, int flag)
 {
     int upBound = trunc(sqrt( number ));
     int sum = 1;
@@ -81,7 +81,11 @@ void getDivisors(const int number, int * n)
     if(isPrimeTrial(sum) ==TRUE)
     {
         (*n)++;
-         printf("is PRIME n %d %d %d\n", (*n), sum, number);
+        if(flag==TRUE)
+        {
+            printf("%d\n",number);
+        }
+        // printf("is PRIME n %d %d %d\n", (*n), sum, number);
     }
     //printf("divisors:%d sum: %d\n", divisors, sum);
 
@@ -90,6 +94,33 @@ void getDivisors(const int number, int * n)
 #ifndef DEBUG
 int main( void )
 {
+
+    int hi = 0; int low = 0; char c;
+    int check = EOF; int n = 0;
+    printf("Intervaly:\n");
+    while( (check = scanf("%c %d %d")) == 3 && check !=EOF)
+    {
+        if( !(c == '#' || c == '?' ))
+        {
+            errorMessage(0);
+        }else if( low > hi) 
+        {   
+            errorMessage(0);
+        }
+        else 
+        {
+                n = 0;
+    for(int s = 100; s <= 120; s++)
+    {
+        getDivisors(s,&n);
+    }
+      printf("Celkem:%d\n", n);
+        }
+        
+    }
+
+
+
     return 0;
 }
 #else 
@@ -97,19 +128,19 @@ int main( void )
 {
     printf("debug mode\n");
     int n = 0;
-    getDivisors(27,&n);
+    getDivisors(27,&n, TRUE);
     printf("n: %d\n", n);
     n = 0;
     for(int s = 100; s <= 120; s++)
     {
-        getDivisors(s,&n);
+        getDivisors(s,&n, TRUE);
     }
       printf("n: %d\n", n);
       assert(2 == n);
     n = 0;
     for(int s = 265; s <= 327; s++)
     {
-        getDivisors(s,&n);
+        getDivisors(s,&n, TRUE);
     }
       printf("n: %d\n", n);
       assert(12 == n);
