@@ -16,22 +16,12 @@
 #include <assert.h>
 #endif
 
-/// void eratosthenSive(int * primesLookUp,int * smallestPrimeFactors,  int biggest )
-// {
-//     int v = 0;
-//     for(int i = 2; i < biggest;i = )
-//     {
-//         printf("sive %d i: %d true: %d\n", primesLookUp[i], i, (primesLookUp[i] == 0) );
-//         if(primesLookUp[i] == 0)
-//         {
-//             for( v= 2*i; v < biggest;v = v +i)
-//             {
-//                 primesLookUp[v] = 1;
-//             }
-//         }
-//     }
-// }
 
+/** @brief Size to precalculate the possible primes
+ *  @param primesDecider array to holdes precumputed primes
+ *  @param max unsigned upper bound for sive
+ *  @return Int.
+ */
 void eratosthenSive2(unsigned char *primesDecider, unsigned int max)
 {
     unsigned int v = 0;
@@ -62,16 +52,10 @@ void errorMessage(int const inputCode)
     printf("Nespravny vstup. at %d \n", inputCode);
 }
 
-/* int sumDivisors(int divisors[MAX_FACOTRS], int *n)
-{
-    int sum = 1;
-    for (int j = 1; j < (*n); j++)
-    {
-        sum += divisors[j];
-    }
-    return sum;
-} */
-
+/** @brief Size to precalculate the possible primes
+ *  @param number long int number whic is positive integerto factorized
+ *  @return Int.
+ */
 int isPrimeTrial(unsigned long int number)
 {
     if ((number == 2) || (number == 3) || (number == 1))
@@ -87,11 +71,14 @@ int isPrimeTrial(unsigned long int number)
             return FALSE;
         }
     }
-    // printf("is PRIME %d\n",number);
     return TRUE;
 }
+
 /** @brief Based on the
  *  https://www.geeksforgeeks.org/print-all-prime-factors-and-their-powers/
+ *  @param primesLookUp array to keep primes
+ *  @param smallestPrimeFactors array with smallest factors of the number
+ *  @param biggest unsigned int upper bond.
  *  @return Void.
  */
 void getAllPrimeFactors(unsigned char *primesLookUp, int unsigned *smallestPrimeFactors, unsigned int biggest)
@@ -111,7 +98,6 @@ void getAllPrimeFactors(unsigned char *primesLookUp, int unsigned *smallestPrime
     }
     for (unsigned int i = 3; i <= biggest; i = i + 2)
     {
-        // printf("sive %d i: %d true: %d\n", primesLookUp[i], i, (primesLookUp[i] == 0) );
         if (primesLookUp[i] == '0')
         {
 
@@ -127,12 +113,14 @@ void getAllPrimeFactors(unsigned char *primesLookUp, int unsigned *smallestPrime
         }
     }
 }
+
 /** @brief Based on the
  *  https://www.planetmath.org/FormulaForSumOfDivisors
  *  https://www.geeksforgeeks.org/print-all-prime-factors-and-their-powers/
- *  @return Void.
+ *  @param inputNumber unsigned int input number 
+ *  @param smallestPrimeFactors array with smallest factors of the number
+ *  @return unsigned int - sum of divisors.
  */
-
 unsigned int getSumOfDivisors(unsigned int inputNumber, unsigned int *smallestPrimeFactors)
 {
     unsigned int number = inputNumber;
@@ -185,6 +173,12 @@ unsigned int getSumTrivial(unsigned int number)
     return sum;
 }
 
+/** @brief naive algorithm to find divisors used in first sulutions.
+ *  @param number unsigned int input number 
+ *  @param n unsigned int input number 
+ *  @param flag array with smallest factors of the number
+ *  @return unsigned int - sum of divisors.
+ */
 void getDivisors(const int number, int *n, int flag)
 {
     int upBound = trunc(sqrt(number));
@@ -278,7 +272,6 @@ int main(void)
 
             if (((low>(PRECALC_PRIMES-1)) ||(hi>(PRECALC_PRIMES-1)))&& (precalc==FALSE))
             {
-                //printf("PREACALCL \n");
                 eratosthenSive2(sumPrimeDecider, MAX_SIVE);
                 getAllPrimeFactors(primesLookUp, smallestPrimeFactors, MAX_PRIMES);
                 for (unsigned int s = 2; s <= MAX_PRIMES; s++)
@@ -303,12 +296,13 @@ int main(void)
             {
                 flag = TRUE;
             }
+            if (low == 1)
+            {
+                    low++;
+            }
             for (int s = low; s <= hi; s++)
             {
-                if (s == 1)
-                {
-                    continue;
-                }
+
                 if ((primesLookUp[s] == '0'))
                 {
                     n++;
@@ -377,25 +371,6 @@ int main(void)
     diff = clock() - start;
     msec = diff * 1000 / CLOCKS_PER_SEC;
     printf("Time taken for precalc %d seconds %d milliseconds with max: %d\n", msec / 1000, msec % 1000, maxSum);
-
-    // start = clock();
-    // primesLookUp[1] = '1';
-    // for (unsigned int s = 2; s <= TEST; s++)
-    // {
-    //     if ((sumPrimeDecider[getSumTrivial(s)] == '\0'))
-    //     {
-    //         primesLookUp[s] = '0';
-    //     }
-    //     else
-    //     {
-    //         primesLookUp[s] = '1';
-    //     }
-    // }
-
-    // diff = clock() - start;
-    // msec = diff * 1000 / CLOCKS_PER_SEC;
-    // printf("Time taken for precalc2 %d seconds %d milliseconds", msec / 1000, msec % 1000);
-
     int precalc = FALSE;
 
     while ((check = scanf(" %c %d %d ", &c, &low, &hi)) == 3 && check != EOF)
