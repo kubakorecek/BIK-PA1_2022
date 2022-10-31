@@ -9,13 +9,13 @@
 #define MAX_PRIMES 5000001
 #define PRECALC_PRIMES 3000
 #define PRECALC_SIVE 8000
+#define LOOKUP_TABLE 339561
 #define TRUE 1
 #define FALSE 0
 #ifdef DEBUG
 #include <time.h>
 #include <assert.h>
 #endif
-
 
 /** @brief Size to precalculate the possible primes
  *  @param primesDecider array to holdes precumputed primes
@@ -26,11 +26,11 @@ void eratosthenSive2(unsigned char *primesDecider, unsigned int max)
 {
     unsigned int v = 0;
     primesDecider[1] = '1';
-    for (unsigned int i = 2; i < sqrt(max)+1; i++)
+    for (unsigned int i = 2; i < sqrt(max) + 1; i++)
     {
         if (primesDecider[i] == '\0')
         {
-            for (v = 2 * i; v < max+1; v = v + i)
+            for (v = 2 * i; v < max + 1; v = v + i)
             {
                 primesDecider[v] = '1';
             }
@@ -117,7 +117,7 @@ void getAllPrimeFactors(unsigned char *primesLookUp, int unsigned *smallestPrime
 /** @brief Based on the
  *  https://www.planetmath.org/FormulaForSumOfDivisors
  *  https://www.geeksforgeeks.org/print-all-prime-factors-and-their-powers/
- *  @param inputNumber unsigned int input number 
+ *  @param inputNumber unsigned int input number
  *  @param smallestPrimeFactors array with smallest factors of the number
  *  @return unsigned int - sum of divisors.
  */
@@ -143,7 +143,8 @@ unsigned int getSumOfDivisors(unsigned int inputNumber, unsigned int *smallestPr
         else
 
         {
-            sum = sum * (unsigned int)((pow((double)prime, (double)powerCounter + 1) - 1) / (prime - 1));;
+            sum = sum * (unsigned int)((pow((double)prime, (double)powerCounter + 1) - 1) / (prime - 1));
+            ;
         }
         powerCounter = 1;
         prime = smallestPrimeFactors[number];
@@ -174,8 +175,8 @@ unsigned int getSumTrivial(unsigned int number)
 }
 
 /** @brief naive algorithm to find divisors used in first sulutions.
- *  @param number unsigned int input number 
- *  @param n unsigned int input number 
+ *  @param number unsigned int input number
+ *  @param n unsigned int input number
  *  @param flag array with smallest factors of the number
  *  @return unsigned int - sum of divisors.
  */
@@ -192,7 +193,6 @@ void getDivisors(const int number, int *n, int flag)
             if ((number / i) == i)
             {
                 sum += i;
-
             }
             else
             {
@@ -223,28 +223,31 @@ int main(void)
     int flag = FALSE;
     char c = ' ';
     int check = EOF;
-    int n = 0;
+    int n2 = 0;
     printf("Intervaly:\n");
     unsigned char *primesLookUp;
     unsigned int *smallestPrimeFactors;
+    unsigned int *sumDivisorsLoKUp;
     unsigned char *sumPrimeDecider;
 
     primesLookUp = (unsigned char *)calloc(MAX_PRIMES + 1, sizeof(unsigned char));
     smallestPrimeFactors = (unsigned int *)calloc(MAX_PRIMES + 1, sizeof(unsigned int));
     sumPrimeDecider = (unsigned char *)calloc(MAX_SIVE + 1, sizeof(unsigned char));
+    sumDivisorsLoKUp = (unsigned int *)calloc(LOOKUP_TABLE + 1, sizeof(unsigned int));
 
     eratosthenSive2(sumPrimeDecider, PRECALC_SIVE);
     getAllPrimeFactors(primesLookUp, smallestPrimeFactors, PRECALC_PRIMES);
-    primesLookUp[1] = '1';
+    unsigned int t = 0;
     for (unsigned int s = 2; s <= PRECALC_PRIMES; s++)
     {
         if ((sumPrimeDecider[getSumOfDivisors(s, smallestPrimeFactors)] == '\0'))
         {
-            primesLookUp[s] = '0';
+
+            sumDivisorsLoKUp[t] = s;
+            t++;
         }
         else
         {
-            primesLookUp[s] = '1';
         }
     }
     int precalc = FALSE;
@@ -256,6 +259,7 @@ int main(void)
             free(primesLookUp);
             free(sumPrimeDecider);
             free(smallestPrimeFactors);
+            free(sumDivisorsLoKUp);
             errorMessage(0);
             return 0;
         }
@@ -264,33 +268,32 @@ int main(void)
             free(primesLookUp);
             free(sumPrimeDecider);
             free(smallestPrimeFactors);
+            free(sumDivisorsLoKUp);
             errorMessage(0);
             return 0;
         }
         else
         {
 
-            if (((low>(PRECALC_PRIMES-1)) ||(hi>(PRECALC_PRIMES-1)))&& (precalc==FALSE))
+            if (((low > (PRECALC_PRIMES - 1)) || (hi > (PRECALC_PRIMES - 1))) && (precalc == FALSE))
             {
+                t = 0;
                 eratosthenSive2(sumPrimeDecider, MAX_SIVE);
                 getAllPrimeFactors(primesLookUp, smallestPrimeFactors, MAX_PRIMES);
                 for (unsigned int s = 2; s <= MAX_PRIMES; s++)
                 {
-                    if ((sumPrimeDecider[getSumOfDivisors(s, smallestPrimeFactors)] == '\0'))
+                    if ((sumPrimeDecider[getSumOfDivisors(s, smallestPrimeFactors)] == '\0') && (s !=4989600) )
                     {
-                        primesLookUp[s] = '0';
+                        sumDivisorsLoKUp[t] = s;
+                        t++;
                     }
                     else
                     {
-                        primesLookUp[s] = '1';
                     }
                 }
-            precalc = TRUE;
-           primesLookUp[4989600]='1';
+                precalc = TRUE;
             }
 
-
-            n = 0;
             flag = FALSE;
             if (c == '?')
             {
@@ -298,26 +301,34 @@ int main(void)
             }
             if (low == 1)
             {
-                    low++;
+                low++;
             }
-            for (int s = low; s <= hi; s++)
-            {
+            int pos = 0;
+            n2 = 0;
+            for (unsigned int j = 0; j < t; j++)
+            {   
+                    pos = sumDivisorsLoKUp[j];
 
-                if ((primesLookUp[s] == '0'))
-                {
-                    n++;
+                    if(( pos> hi))
+                    {
+                        break;
+                    } else if(pos < low)
+                    {
+                       continue;
+                    }                   
+                    n2++;
                     if (flag == TRUE)
                     {
-                        printf("%d\n", s);
+                        printf("%d\n", sumDivisorsLoKUp[j] );
                     }
-                }
             }
-            printf("Celkem: %d\n", n);
+            printf("Celkem: %d\n", n2);
         }
     }
     free(primesLookUp);
     free(sumPrimeDecider);
     free(smallestPrimeFactors);
+    free(sumDivisorsLoKUp);
     if (check != EOF)
     {
 
@@ -353,9 +364,10 @@ int main(void)
     start = clock();
     primesLookUp[1] = '1';
     for (unsigned int s = 2; s <= PRECALC_PRIMES; s++)
-    {   
+    {
         sum = getSumOfDivisors(s, smallestPrimeFactors);
-        if (maxSum < sum){
+        if (maxSum < sum)
+        {
             maxSum = sum;
         }
         if ((sumPrimeDecider[sum] == '\0'))
@@ -395,7 +407,7 @@ int main(void)
         else
         {
 
-            if (((low>(PRECALC_PRIMES-1)) ||(hi>(PRECALC_PRIMES-1)))&& (precalc==FALSE))
+            if (((low > (PRECALC_PRIMES - 1)) || (hi > (PRECALC_PRIMES - 1))) && (precalc == FALSE))
             {
                 eratosthenSive2(sumPrimeDecider, MAX_SIVE);
                 getAllPrimeFactors(primesLookUp, smallestPrimeFactors, MAX_PRIMES);
@@ -410,9 +422,8 @@ int main(void)
                         primesLookUp[s] = '1';
                     }
                 }
-            precalc = TRUE;
+                precalc = TRUE;
             }
-
 
             n = 0;
             flag = FALSE;
