@@ -29,7 +29,7 @@ int dateToIndex(int day, int month, int year, int *idx) {
     short int month31[5] = {4,6,9,11};
     short int monthCumSum[13] = {0,31, 59,90,120,151,181,212,243,273,304,334};
     *idx = 0;
-    if( (day < 10 || (month <1) || (month > 12) || (year < 2000) || day > 31)
+    if( (day < 1 || (month <1) || (month > 12) || (year < 2000) || day > 31)
     {
         return 0;
     }
