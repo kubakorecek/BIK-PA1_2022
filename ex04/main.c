@@ -5,7 +5,7 @@
 #define FALSE 0
 #define TRUE 1
 
-int isLeapYear(int const year)
+int isLeapYear2(int const year)
 {
     if((year) % 4 == 0)
     {
@@ -25,6 +25,15 @@ int isLeapYear(int const year)
     }
     return FALSE;
 }
+
+int isLeapYear(int const year)
+{
+    if ( (year % 4 == 0)&& (year % 4000 != 0) && ( year % 100 != 0 || year % 400 == 0  )){
+        return TRUE;
+    }
+    return  FALSE;
+}
+
 int dateToIndex(int day, int month, int year, int *idx) {
     short int month31[5] = {4,6,9,11};
     short int monthCumSum[13] = {0,31, 59,90,120,151,181,212,243,273,304,334};
