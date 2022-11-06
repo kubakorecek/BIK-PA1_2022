@@ -6,7 +6,7 @@
 
 #define FALSE 0
 #define TRUE 1
-#define LEAPYEARS 40000
+#define LEAPYEARS 500000
 #define SHIFT 1600
 #define MIN_DAYS 1440
 
@@ -25,7 +25,6 @@ typedef struct Date
 
 static short int monthCumSum[13] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 static short int month31[5] = {4, 6, 9, 11};
-static unsigned int leapsYear[LEAPYEARS / 4 + 1] = {0};
 
 int isLeapYear(int const year)
 {
@@ -34,36 +33,6 @@ int isLeapYear(int const year)
         return TRUE;
     }
     return FALSE;
-}
-
-void fillLeapYears(unsigned int end)
-{
-    int pos = 0;
-    for (unsigned int j = 1600; j < end; j += 4)
-    {
-        if (isLeapYear(j) == TRUE)
-        {
-            leapsYear[pos] = j;
-            pos++;
-        }
-    }
-}
-int leapYearsArray(int y1, int y2)
-{
-    int n = 0;
-    for (int j = 0; j < (LEAPYEARS / 4); j++)
-    {
-        if (leapsYear[j] <= y1)
-        {
-            continue;
-        }
-        if (leapsYear[j] >= y2)
-        {
-            break;
-        }
-        n++;
-    }
-    return n;
 }
 short int monthToday(const int *month, const int *day, const short isLeap)
 {
@@ -81,19 +50,16 @@ unsigned long long int dateTonumericMin(const int leaps, const int year, const i
 {
     unsigned long long int numericDate = 0;
     unsigned long long int days = 0;
-    unsigned int pos = 0;
     days += ((year)*365 + monthToday(&month, &day, isLeapYear(year))) + leaps;
     numericDate += days * 1440 + 60 * hour + minut;
     return numericDate;
 }
-int getLeaps(const int starYear, const int endYear)
+int getLeaps(const int startYear, const int endYear)
 {
     int leaps = 0;
-    int pos = 0;
-    while (leapsYear[pos] < endYear)
+    for (int j = startYear; j < endYear; j += 4)
     {
-        pos++;
-        if (leapsYear[pos] > starYear)
+        if (isLeapYear(j) == TRUE)
         {
             leaps++;
         }
@@ -101,51 +67,41 @@ int getLeaps(const int starYear, const int endYear)
     return leaps;
 }
 
-long long int getMinDiff(long long unsigned int  *m1, long long  unsigned int *m2)
-{   
-    long long int res =(long long int)((*m2) - (*m1));
+long long int getMinDiff(long long unsigned int *m1, long long unsigned int *m2)
+{
+    long long int res = (long long int)((*m2) - (*m1));
     return res;
 }
 int getSundaysCount(long long int days, int origin)
 {
-    // 0 is aturday 
-    origin = (origin +5) % 7;
-    //int days = (minDiff/MIN_DAYS);
+    // 0 is aturday
+    origin = (origin + 5) % 7;
+    // int days = (minDiff/MIN_DAYS);
     int sundays = 0;
     // if(((origin + days) % 7) >=6)
     // {
     //     sundays++;
     // }
-    sundays += (days+origin) / 7; 
+    sundays += (days + origin) / 7;
     return sundays;
 }
-long long int calcB(long long int minDiff, int h1, int m1, int h2, int m2,int origin, long long int *b2)
-{   
-    int sundays = getSundaysCount((minDiff/MIN_DAYS)+1,origin);
-    minDiff = minDiff - sundays *MIN_DAYS;
+long long int calcB(long long int minDiff, int h1, int m1, int h2, int m2, int origin, long long int *b2)
+{
+    int sundays = getSundaysCount((minDiff / MIN_DAYS) + 1, origin);
+    minDiff = minDiff - sundays * MIN_DAYS;
 
     int daysTMP = (int)(minDiff / MIN_DAYS);
     (*b2) = DAY_SUM_RU_ING_B2 * (daysTMP);
-    if(daysTMP > 0)
-    {
-        // inner day //
-        //(*b2)-=DAY_SUM_RU_ING_B2;
-    } 
     // rest ot hours and get upper bondary
     int endH = h1 + ((minDiff % MIN_DAYS) / 60);
 
     // number of hours
-    int hourTMP =(int)(minDiff / 60);
-    long long int b1 = HOUR_SUM_RU_ING_B1 * (int)(minDiff / 60) ;
-    if(hourTMP > 24)
+    // int hourTMP = (int)(minDiff / 60);
+    long long int b1 = HOUR_SUM_RU_ING_B1 * (int)(minDiff / 60);
+
+    if (m1 == 0)
     {
-       // b1 -= DAY_SUM_RU_ING_B1;
-    }
-    
-    
-    if(m1 == 0)
-    {
-        if (h1 == 0)
+        if (h1 % 12 == 0)
         {
             (*b2) += 12;
         }
@@ -154,9 +110,9 @@ long long int calcB(long long int minDiff, int h1, int m1, int h2, int m2,int or
     for (int i = h1 + 1; i <= endH; i++)
     {
         (*b2) += (i % 12);
-        if(i % 12 == 0)
+        if (i % 12 == 0)
         {
-           (*b2) += 12; 
+            (*b2) += 12;
         }
     }
     int endM = m1 + (minDiff % 60);
@@ -182,50 +138,104 @@ long long int calcB(long long int minDiff, int h1, int m1, int h2, int m2,int or
 
     return b1;
 }
+int checkMonthDays(int year, int m, int d)
+{
 
+    if (isLeapYear(year) == TRUE)
+    {
+        if (m == 2 && d > 29)
+        {
+            return FALSE;
+        }
+    }
+    else if (m == 2 && d > 28)
+    {
+        return FALSE;
+    }
 
+    for (int k = 0; k < 4; k++)
+    {
+        if ((d > 30) && (m == month31[k]))
+        {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
 
 
 int bells(int y1, int m1, int d1, int h1, int i1,
           int y2, int m2, int d2, int h2, int i2,
           long long int *b1, long long int *b2)
 {
+    // fillLeapYears(LEAPYEARS);
     int leaps1 = getLeaps(SHIFT, y1);
     int leaps2 = getLeaps(SHIFT, y2);
 
-    (*b1) = 0;
-    (*b2) = 0;
     unsigned long long int a = dateTonumericMin(leaps1, y1 - SHIFT, m1, d1, h1, i1);
-    if(((a/60)/24) % 7 == 1)
-    {   
-        d1 = d1+1;
+    unsigned long long int b = dateTonumericMin(leaps2, y2 - SHIFT, m2, d2, h2, i2);
+    //unsigned long long int aold = dateTonumericMin(leaps1, y1 - SHIFT, m1, d1, h1, i1);
+    //unsigned long long int bold = dateTonumericMin(leaps2, y2 - SHIFT, m2, d2, h2, i2);
+    if (a > b)
+    {
+        return FALSE;
+    }
+    if (y1 < 1600 || y2 < 1600 || m1 > 12 || m2 > 12 || m1 < 1 || m2 < 1 || d1 < 1 || d2 < 1 || h1 < 0 || h2 < 0 || h1 > 23 || h2 > 23 || i1 < 0 || i2 < 0 || i1 > 59 || i2 > 59 || d1 > 31 || d2 > 31)
+    {
+        return FALSE;
+    }
+
+    if (checkMonthDays(y1, m1, d1) == FALSE)
+    {
+        return FALSE;
+    }
+
+    if (checkMonthDays(y2, m2, d2) == FALSE)
+    {
+        return FALSE;
+    }
+    if ((((a / 60) / 24) % 7 == 1) && (((b / 60) / 24) % 7 == 1))
+    {
+        (*b1) = 0;
+        (*b2) = 0;
+        return TRUE;
+    }
+    if (((a / 60) / 24) % 7 == 1)
+    {
+        //aold = dateTonumericMin(leaps1, y1 - SHIFT, m1, d1+1, 0, 0);
+        a = a + MIN_DAYS-(i1 + h1 * 60);
         h1 = 0;
         i1 = 0;
-        a = dateTonumericMin(leaps1, y1 - SHIFT, m1, d1, h1, i1);
-    } 
-    unsigned long long int b = dateTonumericMin(leaps2, y2 - SHIFT, m2, d2, h2, i2);
-    if(((b/60)/24) % 7 == 1)
+        
+    }
+
+    if (((b / 60) / 24) % 7 == 1)
     {
-        d2 = d2-1;
+        //bold = dateTonumericMin(leaps1, y2 - SHIFT, m2, d2-1, 23, 45);
+        b = b - (i2 + h2 * 60);
         h2 = 23;
-        i2 = 45;
-        b = dateTonumericMin(leaps2, y2 - SHIFT, m2, d2, h2, i2);
-    } 
-    int origin = ((a/60)/24) % 7;
-    *b1 = calcB(getMinDiff(&a, &b), h1, i1, h2, i2,origin, b2);
+        i2 = 59;
+        
+    }
+    (*b1) = 0;
+    (*b2) = 0;
+    int origin = ((a / 60) / 24) % 7;
+    *b1 = calcB(getMinDiff(&a, &b), h1, i1, h2, i2, origin, b2);
     return TRUE;
 }
 
 #ifndef __PROGTEST__
 int main(int argc, char *argv[])
 {
-    fillLeapYears(LEAPYEARS);
-    assert(leapYearsArray(1600, 1792) == 46);
-    assert(leapYearsArray(1600, 1792) == 46);
+
+    // assert(leapYearsArray(1600, 1792) == 46);
+    // assert(leapYearsArray(1600, 1792) == 46);
 
     assert(isLeapYear(2019) == FALSE);
     assert(isLeapYear(2024) == TRUE);
-    // unsigned long long int days1 = 0;
+    assert(isLeapYear(4000) == FALSE);
+    assert(isLeapYear(2024) == TRUE);
+    // // unsigned long long int days1 = 0;
     // unsigned long long int days2 = 0;
     // unsigned long long int dayst = 0;
     // int y1 = 1600;
@@ -240,7 +250,7 @@ int main(int argc, char *argv[])
     // long long int bt1 = 0;
     // long long int bt2 = 0;
     // unsigned long long int res = 0;
-    // unsigned long long int a = dateTonumericMin(leaps1, y1 - SHIFT, 1, 1, 0, 0);
+    // unsigned long long int a = dateTonumericMin(leaps1, 2000 - SHIFT, 1, 1, 0, 0);
     // unsigned long long int b = dateTonumericMin(leaps2, y2 - SHIFT, 1, 1, 0, 0);
     // unsigned long long int c = ((dateTonumericMin(getLeaps(SHIFT, 1605), 1605 - SHIFT, 1, 1, 0, 0)/60)/24) % 7 ;
     // assert(0 == getMinDiff(&a, &b));
@@ -308,74 +318,63 @@ int main(int argc, char *argv[])
 
     long long int b1, b2;
 
-      assert ( bells ( 2022, 10,  1, 13, 15,
-                       2022, 10,  1, 18, 45, &b1, &b2 ) == 1
-               && b1 == 56
-               && b2 == 20 );
-      assert ( bells ( 2022, 10,  3, 13, 15,
-                       2022, 10,  4, 11, 20, &b1, &b2 ) == 1
-               && b1 == 221
-               && b2 == 143 );
-      assert ( bells ( 2022, 10,  1, 13, 15,
-                       2022, 10,  2, 11, 20, &b1, &b2 ) == 1
-               && b1 == 106
-               && b2 == 65 );
-      assert ( bells ( 2022, 10,  2, 13, 15,
-                       2022, 10,  3, 11, 20, &b1, &b2 ) == 1
-               && b1 == 115
-               && b2 == 78 );
-      assert ( bells ( 2022, 10,  1, 13, 15,
-                       2022, 10,  3, 11, 20, &b1, &b2 ) == 1
-               && b1 == 221
-               && b2 == 143 );
-      assert ( bells ( 2022,  1,  1, 13, 15,
-                       2022, 10,  5, 11, 20, &b1, &b2 ) == 1
-               && b1 == 56861
-               && b2 == 36959 );
-      assert ( bells ( 2019,  1,  1, 13, 15,
-                       2019, 10,  5, 11, 20, &b1, &b2 ) == 1
-               && b1 == 57101
-               && b2 == 37115 );
-      assert ( bells ( 2024,  1,  1, 13, 15,
-                       2024, 10,  5, 11, 20, &b1, &b2 ) == 1
-               && b1 == 57341
-               && b2 == 37271 );
-      assert ( bells ( 1900,  1,  1, 13, 15,
-                       1900, 10,  5, 11, 20, &b1, &b2 ) == 1
-               && b1 == 57101
-               && b2 == 37115 );
-      assert ( bells ( 2022, 10,  1,  0,  0,
-                       2022, 10,  1, 12,  0, &b1, &b2 ) == 1
-               && b1 == 124
-               && b2 == 90 );
-      assert ( bells ( 2022, 10,  1,  0, 15,
-                       2022, 10,  1,  0, 25, &b1, &b2 ) == 1
-               && b1 == 1
-               && b2 == 0 );
-      assert ( bells ( 2022, 10,  1, 12,  0,
-                       2022, 10,  1, 12,  0, &b1, &b2 ) == 1
-               && b1 == 4
-               && b2 == 12 );
-      assert ( bells ( 2022, 11,  1, 12,  0,
-                       2022, 10,  1, 12,  0, &b1, &b2 ) == 0
-               && b1 == 4
-               && b2 == 12 );
-      assert ( bells ( 2022, 10, 32, 12,  0,
-                       2022, 11, 10, 12,  0, &b1, &b2 ) == 0
-               && b1 == 4
-               && b2 == 12 );
-      assert ( bells ( 2100,  2, 29, 12,  0,
-                       2100,  2, 29, 12,  0, &b1, &b2 ) == 0
-               && b1 == 4
-               && b2 == 12 );
-      assert ( bells ( 2000,  2, 29, 12,  0,
-                       2000,  2, 29, 12,  0, &b1, &b2 ) == 1
-               && b1 == 4
-               && b2 == 12 );
-      assert ( bells ( 2004,  2, 29, 12,  0,
-                       2004,  2, 29, 12,  0, &b1, &b2 ) == 1
-               && b1 == 0
-               && b2 == 0 );
+    assert(bells(2022, 10, 1, 13, 15,
+                 2022, 10, 1, 18, 45, &b1, &b2) == 1 &&
+           b1 == 56 && b2 == 20);
+    assert(bells(2022, 10, 3, 13, 15,
+                 2022, 10, 4, 11, 20, &b1, &b2) == 1 &&
+           b1 == 221 && b2 == 143);
+    assert(bells(2022, 10, 1, 13, 15,
+                 2022, 10, 2, 11, 20, &b1, &b2) == 1 &&
+           b1 == 106 && b2 == 65);
+    assert(bells(2022, 10, 2, 13, 15,
+                 2022, 10, 3, 11, 20, &b1, &b2) == 1 &&
+           b1 == 115 && b2 == 78);
+    assert(bells(2022, 10, 1, 13, 15,
+                 2022, 10, 3, 11, 20, &b1, &b2) == 1 &&
+           b1 == 221 && b2 == 143);
+    assert(bells(2022, 1, 1, 13, 15,
+                 2022, 10, 5, 11, 20, &b1, &b2) == 1 &&
+           b1 == 56861 && b2 == 36959);
+    assert(bells(2019, 1, 1, 13, 15,
+                 2019, 10, 5, 11, 20, &b1, &b2) == 1 &&
+           b1 == 57101 && b2 == 37115);
+    assert(bells(2024, 1, 1, 13, 15,
+                 2024, 10, 5, 11, 20, &b1, &b2) == 1 &&
+           b1 == 57341 && b2 == 37271);
+    assert(bells(1900, 1, 1, 13, 15,
+                 1900, 10, 5, 11, 20, &b1, &b2) == 1 &&
+           b1 == 57101 && b2 == 37115);
+    assert(bells(2022, 10, 1, 0, 0,
+                 2022, 10, 1, 12, 0, &b1, &b2) == 1 &&
+           b1 == 124 && b2 == 90);
+    assert(bells(2022, 10, 1, 0, 15,
+                 2022, 10, 1, 0, 25, &b1, &b2) == 1 &&
+           b1 == 1 && b2 == 0);
+    assert(bells(2022, 10, 1, 12, 0,
+                 2022, 10, 1, 12, 0, &b1, &b2) == 1 &&
+           b1 == 4 && b2 == 12);
+    assert(bells(2022, 11, 1, 12, 0,
+                 2022, 10, 1, 12, 0, &b1, &b2) == 0 &&
+           b1 == 4 && b2 == 12);
+    assert(bells(2022, 10, 32, 12, 0,
+                 2022, 11, 10, 12, 0, &b1, &b2) == 0 &&
+           b1 == 4 && b2 == 12);
+    assert(bells(2100, 2, 29, 12, 0,
+                 2100, 2, 29, 12, 0, &b1, &b2) == 0 &&
+           b1 == 4 && b2 == 12);
+    assert(bells(2000, 2, 29, 12, 0,
+                 2000, 2, 29, 12, 0, &b1, &b2) == 1 &&
+           b1 == 4 && b2 == 12);
+    assert(bells(2000, 2, 29, 12, 1,
+                 2000, 2, 29, 12, 1, &b1, &b2) == 1 &&
+           b1 == 4 && b2 == 0);
+    assert(bells(2004, 2, 29, 12, 0,
+                 2004, 2, 29, 12, 0, &b1, &b2) == 1 &&
+           b1 == 0 && b2 == 0);
+    assert(bells(1600, 1, 1, 12, 0,
+                 1600, 1, 1, 12, 0, &b1, &b2) == 1 &&
+           b1 == 4 && b2 == 12);
     return EXIT_SUCCESS;
 }
 #endif /* __PROGTEST__ */
