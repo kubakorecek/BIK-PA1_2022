@@ -36,26 +36,6 @@ unsigned long long Factorial(unsigned long long const n)
     return (facts);
 }
 
-static long GetBinCoeff(long N, long K)
-{
-   // This function gets the total number of unique combinations based upon N and K.
-   // N is the total number of items.
-   // K is the size of the group.
-   // Total number of unique combinations = N! / ( K! (N - K)! ).
-   // This function is less efficient, but is more likely to not overflow when N and K are large.
-   // Taken from:  http://blog.plover.com/math/choose.html
-   //
-   if (K > N) return 0;
-   long r = 1;
-   long d;
-   for (d = 1; d <= K; d++)
-   {
-      r *= N--;
-      r /= d;
-   }
-   return r;
-}
-
 int Combination(unsigned long long int n, unsigned long long k)
 {
     return (int)(Factorial(n) / (Factorial(k) * Factorial(n - k)));
@@ -66,6 +46,28 @@ int cmp(void const *a, void const *b)
     EQUATIONS *aIn = (EQUATIONS *)a;
     EQUATIONS *bIn = (EQUATIONS *)b;
     return (bIn->m_Sum - aIn->m_Sum);
+}
+
+/** @brief Algorithm to be able handle BIN combinational numbers
+ * i took the pseudocode at https://blog.plover.com/math/choose.html
+ *  @author Mark Dominus
+ *  @param k unsigned long long int input number k
+ *  @param n unsigned long long int input number n *
+ *  @return unsigned long long int - sum of divisors.
+ */
+ unsigned long long int BigCombination(unsigned long long int n, unsigned long long k)
+{
+    unsigned long long int r = 1;
+    unsigned long long int d;
+    
+    if (k > n)
+        return 0;
+    for (d = 1; d <= k; d++)
+    {
+        r *= n--;
+        r /= d;
+    }
+    return r;
 }
 
 SEQUENCE *readToCumSum(int *nr)
@@ -103,15 +105,15 @@ SEQUENCE *readToCumSum(int *nr)
         }
         sq[(*nr)] = number;
         (*nr)++;
-   if((*nr) > 1999)
-   {
-    break;
-   }
-   }
+        if ((*nr) > 1999)
+        {
+            break;
+        }
+    }
 
     if (res != EOF || ((*nr) == 0) || (*nr) > 1999)
     {
-        //errorMessage(0);
+        // errorMessage(0);
         free(sq);
         return NULL;
     }
@@ -135,7 +137,7 @@ int sum(int const index1, int const index2, SEQUENCE *input)
 
 EQUATIONS *getEquations(SEQUENCE *input, int const *inr, int *nr)
 {
-    int max =10000000;// maxEquations(inr) + 10;
+    int max = 10000000; // maxEquations(inr) + 10;
     EQUATIONS equation;
     EQUATIONS *eq = NULL;
 
@@ -168,14 +170,14 @@ int getFrequencies(EQUATIONS *eq, int const *n)
 
     for (int j = 1; j < (*n); j++)
     {
-        //printf("j:%d\n", j);
+        // printf("j:%d\n", j);
         if (eq[j - 1].m_Sum == eq[j].m_Sum)
         {
             tmpFreq++;
         }
         else if (tmpFreq > 1)
         {
-            freq += GetBinCoeff(tmpFreq, 2);
+            freq += BigCombination(tmpFreq, 2);
             tmpFreq = 1;
         }
         else
@@ -185,7 +187,7 @@ int getFrequencies(EQUATIONS *eq, int const *n)
         {
             if (eq[j - 1].m_Sum == eq[j].m_Sum)
             {
-                freq += GetBinCoeff(tmpFreq, 2);
+                freq += BigCombination(tmpFreq, 2);
             }
         }
     }
