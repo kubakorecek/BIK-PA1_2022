@@ -35,8 +35,12 @@ Lufthansa - AirFrance
 */
 
 /** @brief Print error message
- *  @param inputCode Number, which can help point where error happened
- *  @return Void.
+ *
+ * Function is just printing to the standard output error message with
+ * posibility to add number in case to help locate error.
+ * .
+ *  @param[in] inputCode Number, which can be seen in error massage.
+ *  @returns Void.
  */
 void errorMessage(int const inputCode)
 {
@@ -48,10 +52,17 @@ void errorMessage(int const inputCode)
     printf("Nespravny vstup. at %d \n", inputCode);
 }
 
-long double euclideanDistnce(FLIGTH a, FLIGTH b)
+/** @brief Metric function for euclidean distance.
+ *
+ * Function is calculating euclidean distance. It is returning the distance.
+ *
+ *  @param[in] fistFlight struct holding  one flight data.
+ *  @param[in] secondFlight struct holding  one flight data..
+ *  @returns long double distance.
+ */
+long double euclideanDistnce(FLIGTH fistFlight, FLIGTH secondFlight)
 {
-
-    return sqrt(pow((a.m_X - b.m_X), 2.0) + pow((a.m_Y - b.m_Y), 2.0));
+    return sqrt(pow((fistFlight.m_X - secondFlight.m_X), 2.0) + pow((fistFlight.m_Y - secondFlight.m_Y), 2.0));
 }
 
 FLIGTH *readFligths(unsigned long long int *nr)
@@ -83,7 +94,7 @@ FLIGTH *readFligths(unsigned long long int *nr)
     if (res != EOF || (*nr) < 2)
     {
         free(data);
-        errorMessage((*nr));
+        // errorMessage((*nr));
         return NULL;
     }
     return data;
@@ -91,27 +102,29 @@ FLIGTH *readFligths(unsigned long long int *nr)
 
 int eq(long double a, long double b)
 {
-    
-    if(fabs(a- b)<=1e4 * DBL_EPSILON * (fabs(a) + fabs(a)))
-    {return 1;}
+
+    if (fabs(a - b) <= 1e4 * DBL_EPSILON * (fabs(a) + fabs(a)))
+    {
+        return 1;
+    }
     return 0;
 }
 
 int gt(long double a, long double b)
 {
-    
-    if(fabs(a- b)<=1e4 * DBL_EPSILON * (fabs(a) + fabs(a)))
-    {return 1;}
+
+    if (fabs(a - b) <= 1e4 * DBL_EPSILON * (fabs(a) + fabs(a)))
+    {
+        return 1;
+    }
     return 0;
 }
 
-
-PAIRS *naiveMin(FLIGTH *fl, long long unsigned const *nr, long long unsigned *numberPairs, long double * distance)
+PAIRS *naiveMin(FLIGTH *fl, long long unsigned const *nr, long long unsigned *numberPairs, long double *distance)
 {
     PAIRS *pairs = NULL;
     PAIRS pr;
     long long unsigned max = 0;
-    
 
     long double min = LDBL_MAX;
     long double tmpMin = 0;
@@ -121,7 +134,7 @@ PAIRS *naiveMin(FLIGTH *fl, long long unsigned const *nr, long long unsigned *nu
         {
 
             tmpMin = euclideanDistnce(fl[j], fl[i]);
-            if (eq(tmpMin,min)) /* meed to redo*/
+            if (eq(tmpMin, min)) /* meed to redo*/
             {
                 if (max <= (*numberPairs))
                 {
@@ -134,16 +147,15 @@ PAIRS *naiveMin(FLIGTH *fl, long long unsigned const *nr, long long unsigned *nu
                         return NULL;
                     }
                 }
-                
+
                 *distance = tmpMin;
-                strcpy(pr.m_Name,fl[j].m_Name);
-                strcpy(pr.m_Name2,fl[i].m_Name);
+                strcpy(pr.m_Name, fl[j].m_Name);
+                strcpy(pr.m_Name2, fl[i].m_Name);
                 pairs[*numberPairs] = pr;
-                (*numberPairs)++; 
-                
+                (*numberPairs)++;
             }
             else if (tmpMin < min) /* need redo */
-            {   
+            {
                 if (max <= (*numberPairs))
                 {
                     max += (max < 100) ? 10 : (max / 2);
@@ -156,10 +168,9 @@ PAIRS *naiveMin(FLIGTH *fl, long long unsigned const *nr, long long unsigned *nu
                     }
                 }
 
-
                 *distance = tmpMin;
-                strcpy(pr.m_Name,fl[j].m_Name);
-                strcpy(pr.m_Name2,fl[i].m_Name);
+                strcpy(pr.m_Name, fl[j].m_Name);
+                strcpy(pr.m_Name2, fl[i].m_Name);
                 pairs[0] = pr;
                 (*numberPairs) = 1;
                 min = tmpMin;
@@ -181,30 +192,30 @@ int main(void)
     if (!data)
     {
         free(data);
-        errorMessage(2);
+        errorMessage(0);
         return EXIT_SUCCESS;
     }
     unsigned long long int cntPairs = 0;
     long double distance = 0;
     PAIRS *pairs = NULL;
 
-    pairs = naiveMin(data,&n,&cntPairs, &distance);
+    pairs = naiveMin(data, &n, &cntPairs, &distance);
 
     if (!pairs)
     {
         free(data);
         free(pairs);
-        errorMessage(2);
+        errorMessage(0);
         return EXIT_SUCCESS;
     }
     printf("Vzdalenost nejblizsich letadel: %Lf\n", distance);
     printf("Nalezenych dvojic: %llu\n", cntPairs);
 
-    for(unsigned long long int j = 0 ; j < cntPairs; j++)
+    for (unsigned long long int j = 0; j < cntPairs; j++)
     {
-        printf("%s - %s\n",pairs[j].m_Name, pairs[j].m_Name2);
+        printf("%s - %s\n", pairs[j].m_Name, pairs[j].m_Name2);
     }
-    
+
     free(data);
     free(pairs);
     return EXIT_SUCCESS;
