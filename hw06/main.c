@@ -26,8 +26,8 @@ typedef struct Good
 {
     char *m_Name;
     unsigned long long m_NameLength;
-    //unsigned long long *m_HashValues;
-    //unsigned long long m_HashValuesLen;
+    // unsigned long long *m_HashValues;
+    // unsigned long long m_HashValuesLen;
     unsigned long long m_HashValue;
     long long m_RegalId;
     long long m_RegalIdMatch;
@@ -57,13 +57,118 @@ void errorFunction()
 {
     printf("Nespravny vstup.\n");
 }
+void destroyListOpt(OPTREGAL *list, long long nr)
+{
+    for (long long i = 0; i <= nr; i++)
+    {
+
+        for (unsigned long long j = 0; j < list[i].m_NumberOfGoods; j++)
+        {
+            free(list[i].m_Goods[j].m_Name);
+            // free(list[i].m_Goods[j].);
+        }
+        free(list[i].m_Goods);
+    }
+    free(list);
+}
+long long checkMatch(char *name, unsigned long long hashvalue, LISTITEMS *regals, long long numberOfRegals, long long *regalGoodId)
+{
+    int flag = FALSE;
+    char *ret = NULL;
+    long long checkSubstrReg = NOREGAL;
+    long long checkSubstrRegGood = NOREGAL;
+    long long checkSubhashReg = NOREGAL;
+    long long checkSubhashRegGood = NOREGAL;
+    for (long long reg = 0; reg < numberOfRegals + 1; reg++)
+    {
+        for (long long goodsReg = 0; goodsReg < (long long)regals[reg].m_NumberOfGoods; goodsReg++)
+        {
+            if (hashvalue == regals[reg].m_Goods[goodsReg].m_HashValue)
+            {
+                *regalGoodId = goodsReg;
+                return reg;
+            }
+            else if (ret == NULL)
+            {
+                ret = strcasestr(regals[reg].m_Goods[goodsReg].m_Name, name);
+                if (ret)
+                {
+                    checkSubstrReg = reg;
+                    checkSubstrRegGood = goodsReg;
+                }
+                else
+                {
+                }
+            }
+        }
+    }
+    if (flag == TRUE)
+    {
+        *regalGoodId = checkSubhashRegGood;
+        return checkSubhashReg;
+    }
+
+    *regalGoodId = checkSubstrRegGood;
+    return checkSubstrReg;
+}
+
+OPTREGAL *allocGood(char *inputName, ssize_t inputSize, LISTITEMS *regals, long long numberOfRegals, OPTREGAL *shoppingByRegal)
+{
+    GOOD newGood;
+    // newGood.m_Name = (char *)malloc(inputSize * sizeof(inputName));
+    if (inputName[strlen(inputName) - 1] == '\n')
+    {
+        inputSize = inputSize - 1;
+    }
+    // strncpy(newGood.m_Name, inputName, inputSize);
+    inputName[inputSize] = '\0';
+    // newGood.m_Name[inputSize] = '\0';
+    newGood.m_NameLength = inputSize;
+    newGood.m_HashValue = stringHash(inputName, newGood.m_NameLength);
+    long long regalGoodId = 0;
+    long long regalId = 0;
+
+    regalGoodId = NOREGAL;
+    regalId = checkMatch(inputName, newGood.m_HashValue, regals, numberOfRegals, &regalGoodId);
+    if (regalId == NOREGAL)
+    {
+        newGood.m_RegalId = NOREGAL;
+        newGood.m_RegalIdMatch = NOREGAL;
+
+        if (shoppingByRegal[numberOfRegals + 1].m_InternalMax <= shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods)
+        {
+            shoppingByRegal[numberOfRegals + 1].m_InternalMax += (shoppingByRegal[numberOfRegals + 1].m_InternalMax < 100) ? 25 : shoppingByRegal[numberOfRegals + 1].m_InternalMax / 2;
+            shoppingByRegal[numberOfRegals + 1].m_Goods = (GOOD *)realloc(shoppingByRegal[numberOfRegals + 1].m_Goods, shoppingByRegal[numberOfRegals + 1].m_InternalMax * sizeof(*shoppingByRegal[numberOfRegals + 1].m_Goods));
+        }
+        shoppingByRegal[numberOfRegals + 1].m_Goods[shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods] = newGood;
+        shoppingByRegal[numberOfRegals + 1].m_Goods[shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods].m_Name = (char *)malloc(inputSize * sizeof(inputName));
+        strncpy(shoppingByRegal[numberOfRegals + 1].m_Goods[shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods].m_Name, inputName, inputSize);
+        shoppingByRegal[numberOfRegals + 1].m_Goods[shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods].m_Name[inputSize] = '\0';
+        shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods++;
+    }
+    else
+    {
+        newGood.m_RegalId = regalId;
+        newGood.m_RegalIdMatch = regalGoodId;
+        if (shoppingByRegal[regalId].m_InternalMax <= shoppingByRegal[regalId].m_NumberOfGoods)
+        {
+            shoppingByRegal[regalId].m_InternalMax += (shoppingByRegal[regalId].m_InternalMax < 100) ? 25 : shoppingByRegal[regalId].m_InternalMax / 2;
+            shoppingByRegal[regalId].m_Goods = (GOOD *)realloc(shoppingByRegal[regalId].m_Goods, shoppingByRegal[regalId].m_InternalMax * sizeof(*shoppingByRegal[numberOfRegals + 1].m_Goods));
+        }
+        shoppingByRegal[regalId].m_Goods[shoppingByRegal[regalId].m_NumberOfGoods] = newGood;
+        shoppingByRegal[regalId].m_Goods[shoppingByRegal[regalId].m_NumberOfGoods].m_Name = (char *)malloc(inputSize * sizeof(inputName));
+        strncpy(shoppingByRegal[regalId].m_Goods[shoppingByRegal[regalId].m_NumberOfGoods].m_Name, inputName, inputSize);
+        shoppingByRegal[regalId].m_Goods[shoppingByRegal[regalId].m_NumberOfGoods].m_Name[inputSize] = '\0';
+        shoppingByRegal[regalId].m_NumberOfGoods++;
+    }
+    // free(newGood.m_Name);
+    return shoppingByRegal;
+}
 
 GOOD readNewGood(char *inputName, ssize_t inputSize)
 {
     GOOD newGood;
     newGood.m_Name = (char *)malloc(inputSize * sizeof(inputName));
-    //newGood.m_HashValues = (unsigned long long *)malloc(inputSize * sizeof(unsigned long long));
-    //newGood.m_HashValuesLen = 0;
     if (inputName[strlen(inputName) - 1] == '\n')
     {
         inputSize = inputSize - 1;
@@ -72,82 +177,116 @@ GOOD readNewGood(char *inputName, ssize_t inputSize)
     newGood.m_Name[inputSize] = '\0';
     newGood.m_NameLength = inputSize;
     newGood.m_HashValue = stringHash(newGood.m_Name, newGood.m_NameLength);
-    // char delim[] = " ";
-    // char *token = strtok(inputName, delim);
-    // // unsigned long long hashValue = 0;
-    // while (token != NULL)
-    // {
-    //     // printf("'%s'\n", token);
-    //     int tmp = strlen(token);
-    //     if (token[tmp - 1] == '\n')
-    //     {
-    //         newGood.m_HashValues[newGood.m_HashValuesLen] = stringHash(token, tmp - 1);
-    //         newGood.m_HashValuesLen++;
-    //     }
-    //     else
-    //     {
-    //         newGood.m_HashValues[newGood.m_HashValuesLen] = stringHash(token, tmp);
-    //         newGood.m_HashValuesLen++;
-    //     }
-    //     token = strtok(NULL, delim);
-    // }
-    // printf("good read with name %s having tokones # %lld\n", newGood.m_Name, newGood.m_HashValuesLen);
-    // for(int i = 0; i < newGood.m_HashValuesLen; i++)
-    // {
-    //     printf("hashes: %lld\n", newGood.m_HashValues[i]);
-    // }
     return newGood;
 }
 
-LISTITEMS *readToShoppingLists(long long *nr, int *flag)
+void readToShoppingLists(long long *nr, int *flag, LISTITEMS *regals, long long numberOfRegals)
 {
-    long long maxShoppingLists = 0;
-    unsigned long long maxGoods = 0;
+    // long long maxShoppingLists = 0;
+    // unsigned long long maxGoods = 0;
     // unsigned long long cntGoods = 0;
 
     char *buff;
 
-    LISTITEMS *shoppingLists = NULL;
-    shoppingLists = (LISTITEMS *)realloc(shoppingLists,
-                                         1 * sizeof(*shoppingLists));
-    shoppingLists[0].m_Goods = NULL;
-    shoppingLists[0].m_Goods = (GOOD *)realloc(shoppingLists[(*nr)].m_Goods,
-                                               1 * sizeof(*shoppingLists[(*nr)].m_Goods));
-    shoppingLists[0].m_NumberOfGoods = 0;
+    // LISTITEMS *shoppingLists = NULL;
+    // shoppingLists = (LISTITEMS *)realloc(shoppingLists,
+    //                                      1 * sizeof(*shoppingLists));
+    // shoppingLists[0].m_Goods = NULL;
+    // shoppingLists[0].m_Goods = (GOOD *)realloc(shoppingLists[(*nr)].m_Goods,
+    //                                            1 * sizeof(*shoppingLists[(*nr)].m_Goods));
+    // shoppingLists[0].m_NumberOfGoods = 0;
     size_t size = 0;
     ssize_t nread = -2;
-    // unsigned long long goodsCnt = 0;
+
+    OPTREGAL *shoppingByRegal = NULL;
+    shoppingByRegal = (OPTREGAL *)realloc(shoppingByRegal,
+                                          (numberOfRegals + 2) * sizeof(*shoppingByRegal));
+
+    for (long long i = 0; i < numberOfRegals + 2; i++)
+    {
+        shoppingByRegal[i].m_Goods = (GOOD *)realloc(NULL, INTENALMAX * sizeof(*shoppingByRegal[i].m_Goods));
+        shoppingByRegal[i].m_NumberOfGoods = 0;
+        shoppingByRegal[i].m_InternalMax = INTENALMAX;
+    }
 
     while ((nread = getline(&buff,
                             &size, stdin)) != EOF)
     {
         if (buff[0] == '\n')
         {
-            (*nr)++;
-            if (maxShoppingLists <= (*nr))
+            int cnt = 0;
+            printf("Optimalizovany seznam:\n");
+            for (long long regId = 0; regId < numberOfRegals + 1; regId++)
             {
-                maxShoppingLists += (maxShoppingLists < 100) ? 25 : maxShoppingLists / 2;
-                shoppingLists = (LISTITEMS *)realloc(shoppingLists,
-                                                     maxShoppingLists * sizeof(*shoppingLists));
+                for (unsigned long long goodId = 0; goodId < shoppingByRegal[regId].m_NumberOfGoods; goodId++)
+                {
+                    printf(" %d. %s -> #%lld %s\n", cnt, shoppingByRegal[regId].m_Goods[goodId].m_Name,
+                           regId, regals[regId].m_Goods[shoppingByRegal[regId].m_Goods[goodId].m_RegalIdMatch].m_Name);
+                    cnt++;
+                }
             }
-            shoppingLists[(*nr)].m_NumberOfGoods = 0;
-            shoppingLists[(*nr)].m_Goods = NULL;
-            maxGoods = 0;
+            for (unsigned long long goodId = 0; goodId < shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods; goodId++)
+            {
+                printf(" %d. %s -> N/A\n", cnt, shoppingByRegal[numberOfRegals + 1].m_Goods[goodId].m_Name);
+                cnt++;
+            }
+            // destroyListOpt(shoppingByRegal, numberOfRegals + 1);
+            for (long long i = 0; i < numberOfRegals + 2; i++)
+            {
+                for (unsigned long long j = 0; j < shoppingByRegal[i].m_NumberOfGoods; j++)
+                {
+                    free(shoppingByRegal[i].m_Goods[j].m_Name);
+                    // free(list[i].m_Goods[j].);
+                }
+                shoppingByRegal[i].m_NumberOfGoods = 0;
+            }
+            (*nr)++;
+            // if (maxShoppingLists <= (*nr))
+            // {
+            //     maxShoppingLists += (maxShoppingLists < 100) ? 25 : maxShoppingLists / 2;
+            //     shoppingLists = (LISTITEMS *)realloc(shoppingLists,
+            //                                          maxShoppingLists * sizeof(*shoppingLists));
+            // }
+            // shoppingLists[(*nr)].m_NumberOfGoods = 0;
+            // shoppingLists[(*nr)].m_Goods = NULL;
+            // maxGoods = 0;
         }
         else
         {
-            if (maxGoods <= shoppingLists[(*nr)].m_NumberOfGoods)
-            {
-                maxGoods += (maxGoods < 100) ? 25 : maxGoods / 2;
-                shoppingLists[(*nr)].m_Goods = (GOOD *)realloc(shoppingLists[(*nr)].m_Goods, maxGoods * sizeof(*shoppingLists[(*nr)].m_Goods));
-            }
+            // if (maxGoods <= shoppingLists[(*nr)].m_NumberOfGoods)
+            // {
+            //     maxGoods += (maxGoods < 100) ? 25 : maxGoods / 2;
+            //     shoppingLists[(*nr)].m_Goods = (GOOD *)realloc(shoppingLists[(*nr)].m_Goods, maxGoods * sizeof(*shoppingLists[(*nr)].m_Goods));
+            // }
 
-            shoppingLists[(*nr)].m_Goods[shoppingLists[(*nr)].m_NumberOfGoods] = readNewGood(buff, nread);
-            shoppingLists[(*nr)].m_NumberOfGoods++;
+            // shoppingLists[(*nr)].m_Goods[shoppingLists[(*nr)].m_NumberOfGoods] =
+            // shoppingLists[(*nr)].m_NumberOfGoods++;
+            shoppingByRegal = allocGood(buff, nread, regals, numberOfRegals, shoppingByRegal);
         }
     };
+    if (nread == EOF)
+    {
+        int cnt = 0;
+        printf("Optimalizovany seznam:\n");
+        for (long long regId = 0; regId < numberOfRegals + 1; regId++)
+        {
+            for (unsigned long long goodId = 0; goodId < shoppingByRegal[regId].m_NumberOfGoods; goodId++)
+            {
+                printf(" %d. %s -> #%lld %s\n", cnt, shoppingByRegal[regId].m_Goods[goodId].m_Name,
+                       regId, regals[regId].m_Goods[shoppingByRegal[regId].m_Goods[goodId].m_RegalIdMatch].m_Name);
+                cnt++;
+            }
+        }
+        for (unsigned long long goodId = 0; goodId < shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods; goodId++)
+        {
+            printf(" %d. %s -> N/A\n", cnt, shoppingByRegal[numberOfRegals + 1].m_Goods[goodId].m_Name);
+            cnt++;
+        }
+    }
+
     free(buff);
-    return shoppingLists;
+    destroyListOpt(shoppingByRegal, numberOfRegals + 1);
+    return;
 }
 
 long long checkRegal(char *buff)
@@ -266,227 +405,111 @@ void destroyList(LISTITEMS *list, long long nr)
         for (unsigned long long j = 0; j < list[i].m_NumberOfGoods; j++)
         {
             free(list[i].m_Goods[j].m_Name);
-            //free(list[i].m_Goods[j].m_HashValues);
+            // free(list[i].m_Goods[j].m_HashValues);
         }
         free(list[i].m_Goods);
     }
     free(list);
 }
 
-void destroyListOpt(OPTREGAL *list, long long nr)
-{
-    for (long long i = 0; i <= nr; i++)
-    {
+// void destroyListOpt(OPTREGAL *list, long long nr)
+// {
+//     for (long long i = 0; i <= nr; i++)
+//     {
 
-        // for (unsigned long long j = 0; j < list[i].m_NumberOfGoods; j++)
-        // {
-        //     free(list[i].m_Goods[j].m_Name);
-        //     free(list[i].m_Goods[j].m_HashValues);
-        // }
-        free(list[i].m_Goods);
-    }
-    free(list);
-}
+//         // for (unsigned long long j = 0; j < list[i].m_NumberOfGoods; j++)
+//         // {
+//         //     free(list[i].m_Goods[j].m_Name);
+//         //     free(list[i].m_Goods[j].m_HashValues);
+//         // }
+//         free(list[i].m_Goods);
+//     }
+//     free(list);
+// }
 
 // char * cmp(const char * s1, const char * s2)
 // {
 //     return strstr(s1,s2);
 // }
 
-long long checkMatch(GOOD goodCurrent, LISTITEMS *regals, long long numberOfRegals, long long *regalGoodId)
-{
-    int flag = FALSE;
-    char *ret = NULL;
-    long long checkSubstrReg = NOREGAL;
-    long long checkSubstrRegGood = NOREGAL;
-    long long checkSubhashReg = NOREGAL;
-    long long checkSubhashRegGood = NOREGAL;
+// void optimazeList(LISTITEMS *regals, LISTITEMS *shoppingLists, long long numberOfRegals, long long numberOfLists)
+// {
+//     // OPTSHOPPINGLIST *opttShopLists = NULL;
+//     // opttShopLists = (OPTSHOPPINGLIST *)realloc(opttShopLists,
+//     //                                            (numberOfLists + 1) * sizeof(*opttShopLists));
 
-    // const char t[100]= goodCurrent.m_Name;
-    //= "coconuts";
-    for (long long reg = 0; reg < numberOfRegals + 1; reg++)
-    {
-        for (long long goodsReg = 0; goodsReg < (long long)regals[reg].m_NumberOfGoods; goodsReg++)
-        {
-            if (goodCurrent.m_HashValue == regals[reg].m_Goods[goodsReg].m_HashValue)
-            {
-                *regalGoodId = goodsReg;
-                return reg;
-            }
-            else if (ret == NULL)
-            {
-                // const char tt[100] = {regals[reg].m_Goods[goodsReg].m_Name};
-                ret = strcasestr(regals[reg].m_Goods[goodsReg].m_Name, goodCurrent.m_Name);
-                if (ret)
-                {
-                    // printf("String found %s %s\n", goodCurrent.m_Name,regals[reg].m_Goods[goodsReg].m_Name);
-                    checkSubstrReg = reg;
-                    checkSubstrRegGood = goodsReg;
-                }
-                else
-                {
-                    // printf("String NOT found %s %s\n", goodCurrent.m_Name,regals[reg].m_Goods[goodsReg].m_Name);
-                }
+//     long long regalGoodId = 0;
+//     long long regalId = 0;
 
-                // if (flag == FALSE)
-                // {
-                //     for (unsigned long long j = 0; j < regals[reg].m_Goods[goodsReg].m_HashValuesLen; j++)
-                //     {
-                //         if (regals[reg].m_Goods[goodsReg].m_HashValues[j] == goodCurrent.m_HashValues[0])
-                //         {
-                //             // flag = TRUE;
-                //             for (unsigned long long i = 0; i < goodCurrent.m_HashValuesLen; i++)
-                //             {
-                //                 if (goodCurrent.m_HashValues[i] != regals[reg].m_Goods[goodsReg].m_HashValues[j + i])
-                //                 {
-                //                     // flag = FALSE;
-                //                     // checkSubhashRegGood = NOREGAL;
-                //                     // checkSubhashReg = NOREGAL;
-                //                     break;
-                //                 }
-                //                 else if (i == (goodCurrent.m_HashValuesLen - 1))
-                //                 {
-                //                     flag = TRUE;
-                //                     checkSubhashRegGood= goodsReg;
-                //                     checkSubhashReg = reg;
-                //                 }
-                //             }
-                //         }
-                //     }
-                // }
-            }
-        }
-    }
+//     OPTREGAL *shoppingByRegal = NULL;
+//     shoppingByRegal = (OPTREGAL *)realloc(shoppingByRegal,
+//                                           (numberOfRegals + 2) * sizeof(*shoppingByRegal));
 
-    // for (long long reg = 0; reg < numberOfRegals + 1; reg++)
-    // {
-    //     for (long long goodsReg = 0; goodsReg < (long long)regals[reg].m_NumberOfGoods; goodsReg++)
-    //     {
-    //         // for (unsigned long long j = 0; j < regals[reg].m_Goods[goodsReg].m_HashValuesLen; j++)
-    //         // {
-    //         //     if (regals[reg].m_Goods[goodsReg].m_HashValues[j] == goodCurrent.m_HashValues[0])
-    //         //     {
-    //         //         // flag = TRUE;
-    //         //         for (unsigned long long i = 0; i < goodCurrent.m_HashValuesLen; i++)
-    //         //         {
-    //         //             if (goodCurrent.m_HashValues[i] != regals[reg].m_Goods[goodsReg].m_HashValues[j + i])
-    //         //             {
-    //         //                 // flag = FALSE;
-    //         //                 // checkSubhashRegGood = NOREGAL;
-    //         //                 // checkSubhashReg = NOREGAL;
-    //         //                 break;
-    //         //             }
-    //         //             else if (i == (goodCurrent.m_HashValuesLen - 1))
-    //         //             {
-    //         //                 *regalGoodId = goodsReg;
-    //         //                 return reg;
-    //         //             }
-    //         //         }
-    //         //     }
-    //         // }
-    //     }
-    // }
-    if(flag == TRUE)
-    {
-     *regalGoodId = checkSubhashRegGood;
-     return checkSubhashReg;  
-    }
+//     for (long long i = 0; i < numberOfRegals + 2; i++)
+//     {
+//         shoppingByRegal[i].m_Goods = (GOOD *)realloc(NULL, INTENALMAX * sizeof(*shoppingByRegal[i].m_Goods));
+//         shoppingByRegal[i].m_NumberOfGoods = 0;
+//         shoppingByRegal[i].m_InternalMax = INTENALMAX;
+//     }
 
-    *regalGoodId = checkSubstrRegGood;
-    return checkSubstrReg;
-}
+//     for (long long j = 0; j < numberOfLists + 1; j++)
+//     {
+//         for (long long i = 0; i < numberOfRegals + 2; i++)
+//         {
 
-void optimazeList(LISTITEMS *regals, LISTITEMS *shoppingLists, long long numberOfRegals, long long numberOfLists)
-{
-    // OPTSHOPPINGLIST *opttShopLists = NULL;
-    // opttShopLists = (OPTSHOPPINGLIST *)realloc(opttShopLists,
-    //                                            (numberOfLists + 1) * sizeof(*opttShopLists));
+//             shoppingByRegal[i].m_NumberOfGoods = 0;
+//         }
 
-    long long regalGoodId = 0;
-    long long regalId = 0;
+//         for (unsigned long long goodCurrent = 0; goodCurrent < shoppingLists[j].m_NumberOfGoods; goodCurrent++)
+//         {
 
-    OPTREGAL *shoppingByRegal = NULL;
-    shoppingByRegal = (OPTREGAL *)realloc(shoppingByRegal,
-                                          (numberOfRegals + 2) * sizeof(*shoppingByRegal));
+//             regalGoodId = NOREGAL;
+//             regalId = checkMatch(shoppingLists[j].m_Goods[goodCurrent], regals, numberOfRegals, &regalGoodId);
+//             if (regalId == NOREGAL)
+//             {
+//                 shoppingLists[j].m_Goods[goodCurrent].m_RegalId = NOREGAL;
+//                 shoppingLists[j].m_Goods[goodCurrent].m_RegalIdMatch = NOREGAL;
 
-    for (long long i = 0; i < numberOfRegals + 2; i++)
-    {
-        shoppingByRegal[i].m_Goods = (GOOD *)realloc(NULL, INTENALMAX * sizeof(*shoppingByRegal[i].m_Goods));
-        shoppingByRegal[i].m_NumberOfGoods = 0;
-        shoppingByRegal[i].m_InternalMax = INTENALMAX;
-    }
-
-    for (long long j = 0; j < numberOfLists + 1; j++)
-    {
-        for (long long i = 0; i < numberOfRegals + 2; i++)
-        {
-
-            shoppingByRegal[i].m_NumberOfGoods = 0;
-        }
-
-        for (unsigned long long goodCurrent = 0; goodCurrent < shoppingLists[j].m_NumberOfGoods; goodCurrent++)
-        {
-
-            regalGoodId = NOREGAL;
-            regalId = checkMatch(shoppingLists[j].m_Goods[goodCurrent], regals, numberOfRegals, &regalGoodId);
-            if (regalId == NOREGAL)
-            {
-                shoppingLists[j].m_Goods[goodCurrent].m_RegalId = NOREGAL;
-                shoppingLists[j].m_Goods[goodCurrent].m_RegalIdMatch = NOREGAL;
-
-                if (shoppingByRegal[numberOfRegals + 1].m_InternalMax <= shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods)
-                {
-                    shoppingByRegal[numberOfRegals + 1].m_InternalMax += (shoppingByRegal[numberOfRegals + 1].m_InternalMax < 100) ? 25 : shoppingByRegal[numberOfRegals + 1].m_InternalMax / 2;
-                    shoppingByRegal[numberOfRegals + 1].m_Goods = (GOOD *)realloc(shoppingByRegal[numberOfRegals + 1].m_Goods, shoppingByRegal[numberOfRegals + 1].m_InternalMax * sizeof(*shoppingByRegal[numberOfRegals + 1].m_Goods));
-                }
-                shoppingByRegal[numberOfRegals + 1].m_Goods[shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods] = shoppingLists[j].m_Goods[goodCurrent];
-                shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods++;
-            }
-            else
-            {
-                shoppingLists[j].m_Goods[goodCurrent].m_RegalId = regalId;
-                shoppingLists[j].m_Goods[goodCurrent].m_RegalIdMatch = regalGoodId;
-                if (shoppingByRegal[regalId].m_InternalMax <= shoppingByRegal[regalId].m_NumberOfGoods)
-                {
-                    shoppingByRegal[regalId].m_InternalMax += (shoppingByRegal[regalId].m_InternalMax < 100) ? 25 : shoppingByRegal[regalId].m_InternalMax / 2;
-                    shoppingByRegal[regalId].m_Goods = (GOOD *)realloc(shoppingByRegal[regalId].m_Goods, shoppingByRegal[regalId].m_InternalMax * sizeof(*shoppingByRegal[numberOfRegals + 1].m_Goods));
-                }
-                shoppingByRegal[regalId].m_Goods[shoppingByRegal[regalId].m_NumberOfGoods] = shoppingLists[j].m_Goods[goodCurrent];
-                shoppingByRegal[regalId].m_NumberOfGoods++;
-            }
-
-            // if ((regalId = checkMatch(shoppingLists[j].m_Goods[goodCurrent], regals, &regalGoodId) )== NOREGAL)
-            // {
-            //     opttShopLists[j].m_Regal[numberOfRegals + 1].m_GoodShopListIds[opttShopLists[j].m_Regal[numberOfRegals + 1].m_NumberOfGoodsRegal] = goodCurrent;
-            //     opttShopLists[j].m_Regal[numberOfRegals + 1].m_GoodRegalListIds[opttShopLists[j].m_Regal[numberOfRegals + 1].m_NumberOfGoodsRegal] = regalId;
-            //     opttShopLists[j].m_Regal[numberOfRegals + 1].m_NumberOfGoodsRegal++;
-            // }
-            // else
-            // {
-            //     opttShopLists[j].m_Regal[regalId].m_GoodShopListIds[opttShopLists[j].m_Regal[regalId].m_NumberOfGoodsRegal] = goodCurrent;
-            //     opttShopLists[j].m_Regal[regalId].m_GoodRegalListIds[opttShopLists[j].m_Regal[regalId].m_NumberOfGoodsRegal] = regalGoodId;
-            //     opttShopLists[j].m_Regal[regalId].m_NumberOfGoodsRegal++;
-            // }
-        }
-        int cnt = 0;
-        printf("Optimalizovany seznam:\n");
-        for (long long regId = 0; regId < numberOfRegals + 1; regId++)
-        {
-            for (unsigned long long goodId = 0; goodId < shoppingByRegal[regId].m_NumberOfGoods; goodId++)
-            {
-                printf(" %d. %s -> #%lld %s\n", cnt, shoppingByRegal[regId].m_Goods[goodId].m_Name,
-                       regId, regals[regId].m_Goods[shoppingByRegal[regId].m_Goods[goodId].m_RegalIdMatch].m_Name);
-                cnt++;
-            }
-        }
-        for (unsigned long long goodId = 0; goodId < shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods; goodId++)
-        {
-            printf(" %d. %s -> N/A\n", cnt, shoppingByRegal[numberOfRegals + 1].m_Goods[goodId].m_Name);
-            cnt++;
-        }
-    }
-    destroyListOpt(shoppingByRegal, numberOfRegals + 1);
-}
+//                 if (shoppingByRegal[numberOfRegals + 1].m_InternalMax <= shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods)
+//                 {
+//                     shoppingByRegal[numberOfRegals + 1].m_InternalMax += (shoppingByRegal[numberOfRegals + 1].m_InternalMax < 100) ? 25 : shoppingByRegal[numberOfRegals + 1].m_InternalMax / 2;
+//                     shoppingByRegal[numberOfRegals + 1].m_Goods = (GOOD *)realloc(shoppingByRegal[numberOfRegals + 1].m_Goods, shoppingByRegal[numberOfRegals + 1].m_InternalMax * sizeof(*shoppingByRegal[numberOfRegals + 1].m_Goods));
+//                 }
+//                 shoppingByRegal[numberOfRegals + 1].m_Goods[shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods] = shoppingLists[j].m_Goods[goodCurrent];
+//                 shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods++;
+//             }
+//             else
+//             {
+//                 shoppingLists[j].m_Goods[goodCurrent].m_RegalId = regalId;
+//                 shoppingLists[j].m_Goods[goodCurrent].m_RegalIdMatch = regalGoodId;
+//                 if (shoppingByRegal[regalId].m_InternalMax <= shoppingByRegal[regalId].m_NumberOfGoods)
+//                 {
+//                     shoppingByRegal[regalId].m_InternalMax += (shoppingByRegal[regalId].m_InternalMax < 100) ? 25 : shoppingByRegal[regalId].m_InternalMax / 2;
+//                     shoppingByRegal[regalId].m_Goods = (GOOD *)realloc(shoppingByRegal[regalId].m_Goods, shoppingByRegal[regalId].m_InternalMax * sizeof(*shoppingByRegal[numberOfRegals + 1].m_Goods));
+//                 }
+//                 shoppingByRegal[regalId].m_Goods[shoppingByRegal[regalId].m_NumberOfGoods] = shoppingLists[j].m_Goods[goodCurrent];
+//                 shoppingByRegal[regalId].m_NumberOfGoods++;
+//             }
+//         }
+//         int cnt = 0;
+//         printf("Optimalizovany seznam:\n");
+//         for (long long regId = 0; regId < numberOfRegals + 1; regId++)
+//         {
+//             for (unsigned long long goodId = 0; goodId < shoppingByRegal[regId].m_NumberOfGoods; goodId++)
+//             {
+//                 printf(" %d. %s -> #%lld %s\n", cnt, shoppingByRegal[regId].m_Goods[goodId].m_Name,
+//                        regId, regals[regId].m_Goods[shoppingByRegal[regId].m_Goods[goodId].m_RegalIdMatch].m_Name);
+//                 cnt++;
+//             }
+//         }
+//         for (unsigned long long goodId = 0; goodId < shoppingByRegal[numberOfRegals + 1].m_NumberOfGoods; goodId++)
+//         {
+//             printf(" %d. %s -> N/A\n", cnt, shoppingByRegal[numberOfRegals + 1].m_Goods[goodId].m_Name);
+//             cnt++;
+//         }
+//     }
+//     destroyListOpt(shoppingByRegal, numberOfRegals + 1);
+// }
 
 int main(void)
 {
@@ -507,21 +530,22 @@ int main(void)
     // printf("regals FINISHED\n");
 
     // printf("regals FINISHED \n");
-    LISTITEMS *shoppingLists = NULL;
+    // LISTITEMS *shoppingLists = NULL;
     long long nrSl = 0;
-    if (flag == TRUE)
-    {
-        shoppingLists = readToShoppingLists(&nrSl, &flag);
-    }
+    readToShoppingLists(&nrSl, &flag, regals, nr);
+    // if (flag == TRUE)
+    // {
+    //     shoppingLists = readToShoppingLists(&nrSl, &flag);
+    // }
 
-    if (shoppingLists == NULL || flag == FALSE)
-    {
-        flag = FALSE;
-        destroyList(regals, nr);
-        destroyList(shoppingLists, nrSl);
-        errorFunction();
-        return EXIT_SUCCESS;
-    }
+    // if (shoppingLists == NULL || flag == FALSE)
+    // {
+    //     flag = FALSE;
+    //     destroyList(regals, nr);
+    //     destroyList(shoppingLists, nrSl);
+    //     errorFunction();
+    //     return EXIT_SUCCESS;
+    // }
 
     // printList(shoppingLists, nrSl);
     // printf("shopping FINISHED \n");
@@ -533,16 +557,16 @@ int main(void)
     // {
     //     return EXIT_SUCCESS;
     // }
-    if (flag == TRUE)
-    {
-        optimazeList(regals, shoppingLists, nr, nrSl);
-    }
+    // if (flag == TRUE)
+    // {
+    //     optimazeList(regals, shoppingLists, nr, nrSl);
+    // }
 
     // printList(shoppingLists, nrSl);
     // printf("optimaze FINISHED \n");
     destroyList(regals, nr);
     // free(regals);
     //
-    destroyList(shoppingLists, nrSl);
+    // destroyList(shoppingLists, nrSl);
     return EXIT_SUCCESS;
 }
