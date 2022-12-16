@@ -50,7 +50,20 @@ int maximumScalar(int a, int b)
         return b;
 }
 
-SCORE getScore(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, int *S, int sizeSouth, int player)
+void copyARR(char arr1[35], char arr2[35])
+{
+    for (int i = 0; i < 35; i++)
+    {
+        arr1[i] = arr2[i];
+        //printf("%c\n", arr1[i]);
+    }
+}
+
+
+
+void assignDecssici
+
+SCORE getScore(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, int *S, int sizeSouth, int player, int depth)
 {
     g_Calls++;
     SCORE sc4;
@@ -85,7 +98,7 @@ SCORE getScore(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest
     }
     if (sizeWest > 0)
     {
-        tmpBack = getScore(N, sizeNorth, E, sizeEast, W + 1, sizeWest - 1, S, sizeSouth, player);
+        tmpBack = getScore(N, sizeNorth, E, sizeEast, W + 1, sizeWest - 1, S, sizeSouth, player, depth + 1);
 
         if (player)
         {
@@ -97,11 +110,13 @@ SCORE getScore(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest
             sc1.m_Player1 = 0 + tmpBack.m_Player1;
             sc1.m_Player2 = W[0] + tmpBack.m_Player2;
         }
+        copyARR(sc1.m_Moves, tmpBack.m_Moves);
+        sc1.m_Moves[depth] = 'W';
     }
 
     if (sizeNorth > 0)
     {
-        tmpBack = getScore(N + 1, sizeNorth - 1, E, sizeEast, W, sizeWest, S, sizeSouth, player);
+        tmpBack = getScore(N + 1, sizeNorth - 1, E, sizeEast, W, sizeWest, S, sizeSouth, player, depth + 1);
 
         if (player)
         {
@@ -114,10 +129,13 @@ SCORE getScore(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest
             sc2.m_Player2 = N[0] + tmpBack.m_Player2;
             sc2.m_Player1 = 0 + tmpBack.m_Player1;
         }
+        copyARR(sc2.m_Moves, tmpBack.m_Moves);
+        sc2.m_Moves[depth] = 'W';
     }
     if (sizeEast > 0)
     {
-        tmpBack = getScore(N, sizeNorth, E + 1, sizeEast - 1, W, sizeWest, S, sizeSouth, player);
+        sc1.m_Moves[depth] = 'E';
+        tmpBack = getScore(N, sizeNorth, E + 1, sizeEast - 1, W, sizeWest, S, sizeSouth, player, depth + 1);
 
         if (player)
         {
@@ -129,10 +147,13 @@ SCORE getScore(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest
             sc3.m_Player1 = 0 + tmpBack.m_Player1;
             sc3.m_Player2 = E[0] + tmpBack.m_Player2;
         }
+        copyARR(sc3.m_Moves, tmpBack.m_Moves);
+        sc3.m_Moves[depth] = 'W';
     }
     if (sizeSouth > 0)
     {
-        tmpBack = getScore(N, sizeNorth, E, sizeEast, W, sizeWest, S + 1, sizeSouth - 1, player);
+        sc1.m_Moves[depth] = 'S';
+        tmpBack = getScore(N, sizeNorth, E, sizeEast, W, sizeWest, S + 1, sizeSouth - 1, player, depth + 1);
 
         if (player)
         {
@@ -144,6 +165,8 @@ SCORE getScore(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest
             sc4.m_Player1 = 0 + tmpBack.m_Player1;
             sc4.m_Player2 = S[0] + tmpBack.m_Player2;
         }
+        copyARR(sc4.m_Moves, tmpBack.m_Moves);
+        sc4.m_Moves[depth] = 'W';
     }
 
     // if( max.m_Player2 > 0 || max.m_Player1 > 0)
@@ -156,8 +179,9 @@ SCORE play(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, in
 {
     g_0Calls = 0;
     g_Calls = 0;
+    int depth = 0;
 
-        SCORE sc4;
+    SCORE sc4;
     SCORE sc3;
     SCORE sc2;
     SCORE sc1;
@@ -173,7 +197,7 @@ SCORE play(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, in
 
     if (sizeWest > 0)
     {
-        tmpBack = getScore(N, sizeNorth, E, sizeEast, W + 1, sizeWest - 1, S, sizeSouth, player);
+        tmpBack = getScore(N, sizeNorth, E, sizeEast, W + 1, sizeWest - 1, S, sizeSouth, player, depth);
 
         if (player)
         {
@@ -189,7 +213,7 @@ SCORE play(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, in
 
     if (sizeNorth > 0)
     {
-        tmpBack = getScore(N + 1, sizeNorth - 1, E, sizeEast, W, sizeWest, S, sizeSouth, player);
+        tmpBack = getScore(N + 1, sizeNorth - 1, E, sizeEast, W, sizeWest, S, sizeSouth, player, depth);
 
         if (player)
         {
@@ -205,7 +229,7 @@ SCORE play(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, in
     }
     if (sizeEast > 0)
     {
-        tmpBack = getScore(N, sizeNorth, E + 1, sizeEast - 1, W, sizeWest, S, sizeSouth, player);
+        tmpBack = getScore(N, sizeNorth, E + 1, sizeEast - 1, W, sizeWest, S, sizeSouth, player, depth);
 
         if (player)
         {
@@ -220,7 +244,7 @@ SCORE play(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, in
     }
     if (sizeSouth > 0)
     {
-        tmpBack = getScore(N, sizeNorth, E, sizeEast, W, sizeWest, S + 1, sizeSouth - 1, player);
+        tmpBack = getScore(N, sizeNorth, E, sizeEast, W, sizeWest, S + 1, sizeSouth - 1, player, depth);
 
         if (player)
         {
@@ -233,11 +257,20 @@ SCORE play(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, in
             sc4.m_Player2 = S[0] + tmpBack.m_Player2;
         }
     }
+    char a[10]; 
+    a[5] = 'P';
+    printf("WEST %d %d %s m\n", sc1.m_Player1, sc1.m_Player2);
+        for (int i = 0; i < 35; i++)
+    {
+        //arr1[i] = arr2[i];
+        printf("%c\n", sc1.m_Moves[i]);
+    }
 
-    printf("South %d %d\n",sc1.m_Player1, sc1.m_Player2);
-    printf("Noth %d %d\n", sc2.m_Player1, sc2.m_Player2);
-    printf("West %d %d\n", sc3.m_Player1, sc3.m_Player2);
-    printf("East %d %d\n", sc4.m_Player1, sc4.m_Player2);
+    printf("NORT %d %d\n", sc2.m_Player1, sc2.m_Player2);
+
+    printf("EAST %d %d\n", sc3.m_Player1, sc3.m_Player2);
+
+    printf("SOUTH %d %d\n", sc4.m_Player1, sc4.m_Player2);
 
     return maximumScore(maximumScore(maximumScore(sc1, sc2, player), sc3, player), sc4, player);
 }
@@ -262,34 +295,41 @@ int main()
     // printf("max 1: %d  2: %d calls: %lld\n", max.m_Player1, max.m_Player2, g_Calls);
     // sc = getScore(N, 2, E, 0, W, 2, S, 0, 0, &max);
     // printf("max 1: %d  2: %d calls: %lld\n", max.m_Player1, max.m_Player2, g_Calls);
+
     printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
+    // sc = play(N, 2, E, 3, W, 1, S + 1, 2 - 1, 0);
+    // printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
+    // sc = play(N, 2, E, 3, W, 1, S + 2, 2 - 2, 1);
+    // printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
+    // sc = play(N, 2, E, 3, W+1, 1-1, S + 2, 2 - 2, 1);
+    // printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
 
     int NN[] = {-66, -52, 109};
     int WW[] = {78};
     int EE[] = {118, 146, 46, 77};
     int SS[] = {67, 159, -13};
-    sc = play(NN, 3, EE, 4, WW, 1, SS, 3, 1);
-    printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
-    //     sc =  getScore(NN, 3, EE+1, 3, WW, 1, SS, 3, 1, &max);
-    // printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
-    //     sc =  getScore(NN, 3, EE, 4, WW+1, 0, SS, 3, 1, &max);
-    // printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
-    //     sc =  getScore(NN, 3, EE, 4, WW, 1, SS+1, 2, 1, &max);
-    // printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
+    // sc = play(NN, 3, EE, 4, WW, 1, SS, 3, 1);
+    //  printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
+    //      sc =  getScore(NN, 3, EE+1, 3, WW, 1, SS, 3, 1, &max);
+    //  printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
+    //      sc =  getScore(NN, 3, EE, 4, WW+1, 0, SS, 3, 1, &max);
+    //  printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
+    //      sc =  getScore(NN, 3, EE, 4, WW, 1, SS+1, 2, 1, &max);
+    //  printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
 
     int NNN[] = {1, 2};
     int WWW[] = {3, 5};
     int EEE[] = {9, 1, 1, 1};
     int SSS[] = {1, 7};
-    sc = play(NNN, 2, EEE, 4, WWW, 2, SSS, 2, 1);
-    printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
+    // sc = play(NNN, 2, EEE, 4, WWW, 2, SSS, 2, 1);
+    // printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
 
     int NNNN[] = {1, 2, -4};
     int EEEE[] = {9, 1, 1};
     int WWWW[] = {3, 5, -2};
     int SSSS[] = {1, 7};
-    sc = play(NNNN, 3, EEEE, 3, WWWW, 3, SSSS, 2, 1);
-    printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
+    // sc = play(NNNN, 3, EEEE, 3, WWWW, 3, SSSS, 2, 1);
+    // printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
 
     //   printf("%d %d\n", sc1.m_Player1, sc1.m_Player2);
 }
