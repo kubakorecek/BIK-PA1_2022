@@ -1,14 +1,22 @@
 #include <stdio.h>
+
 #include <limits.h>
+
 #include <stdlib.h>
+
 #include <string.h>
 
 #define MAX_STONES 50
+#define MAX_STONE_IN_GAME 32
 #define TRUE 1
 #define FALSE 0
 
-long long int g_Calls = 0;
-long long int g_0Calls = 0;
+#define PLAYER1 1
+#define PLAYER2 0
+
+/**
+ * Struct holding the Score for both players and last move.
+ */
 typedef struct Score
 {
     int m_Player1;
@@ -17,80 +25,120 @@ typedef struct Score
 
 } SCORE;
 
+/**
+ * Struct holding the Score for lookup table.
+ */
 typedef struct Result
 {
     SCORE m_Score;
-    int m_Has;
+    int m_HasCalculated;
 
 } RESULT;
 
-int maximum(int size, int *array, int max)
+/**
+ * Find maximum of two structs holding two player scores.
+ *
+ * Choosing any number then 1 will result in comparing by player 2
+ *
+ * @param[in] one struct - SCORE - first score
+ * @param[in] second struct SCORE - second score
+ * @param[in] player  int - 1 for taking player 2, player 2 otherwise
+ * @returns struct - SCORE - the bigger score
+ */
+SCORE maximumScore(SCORE const one, SCORE const second, int const player)
 {
-    for (int i = 0; i < size; i++)
+    if (player == PLAYER1)
     {
-        if (array[i] > max)
-        {
-            max = array[i];
-        }
-    }
-    return max;
-}
-
-SCORE maximumScore(SCORE a, SCORE b, int player)
-{
-    if (player == 1)
-    {
-        if (a.m_Player1 > b.m_Player1)
-            return a;
-        else
-            return b;
+        if (one.m_Player1 > second.m_Player1)
+            return one;
     }
     else
-
     {
-        if (a.m_Player2 > b.m_Player2)
-            return a;
-        else
-            return b;
+        if (one.m_Player2 > second.m_Player2)
+            return one;
     }
+    return second;
 }
-void emptyResults(RESULT LookUP[MAX_STONES][MAX_STONES][MAX_STONES][MAX_STONES], int sizeNorth, int sizeEast, int sizeWest, int sizeSouth)
+
+/**
+ * Empty ( initialize) array for Look Up table to play the Game.
+ *
+ * Array should not have more then 50*50*50*50 coordinates.
+ * It will set variable m_HasCalculated to FALSE.
+ *
+ * @param[in, out] LookUP 4D array of RESULT
+ * @param[in] sizeNorth int - number of stones in North direction.
+ * @param[in] sizeEast int - number of stones in East direction.
+ * @param[in] sizeWest int - number of stones in West direction.
+ * @param[in] sizeSouth int - number of stones in South direction.
+ */
+void emptyResults(RESULT LookUP[MAX_STONES][MAX_STONES][MAX_STONES][MAX_STONES], int const sizeNorth,
+                  int const sizeEast, int const sizeWest, int const sizeSouth)
 {
     for (int w = 0; w <= sizeWest; w++)
         for (int s = 0; s <= sizeSouth; s++)
             for (int n = 0; n <= sizeNorth; n++)
                 for (int e = 0; e <= sizeEast; e++)
-                    LookUP[w][s][n][e].m_Has = FALSE;
-}
-int maximumScalar(int a, int b)
-{
-    if (a > b)
-        return a;
-    else
-        return b;
+                    LookUP[w][s][n][e].m_HasCalculated = FALSE;
 }
 
-void copyARR(char arr1[35], char arr2[35])
+/**
+ * Results from taking stone to be assigned.
+ *
+ *
+ * @param[in] score resulting score
+ * @param[in] player int - player.
+ * @param[in] Stones array - Stones.
+ * @param[in] move char - Move.
+ * @param[in] sizeSouth int - number of stones in South direction.
+ * @returns struct - SCORE - the new score
+ */
+SCORE takeStoneResult( SCORE const score, int const player, int const Stones[MAX_STONES], char const move)
 {
-    for (int i = 0; i < 35; i++)
+    SCORE tmp;
+    if (player)
     {
-        arr1[i] = arr2[i];
-        // printf("%c\n", arr1[i]);
+        tmp.m_Player1 = Stones[0] + score.m_Player1;
+        tmp.m_Player2 = 0 + score.m_Player2;
     }
+    else
+    {
+        tmp.m_Player1 = 0 + score.m_Player1;
+        tmp.m_Player2 = Stones[0] + score.m_Player2;
+    }
+    tmp.m_Move = move;
+    return tmp;
 }
 
-SCORE getScore(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, int *S, int sizeSouth, int player, int depth, RESULT LookUP[MAX_STONES][MAX_STONES][MAX_STONES][MAX_STONES])
+/**
+ * The main recursive playing function for play the game.
+ *
+ * It will recursively play the Game for all possibilities.
+ * Due to lookup table, it will play just if the game was not played before.
+ * Unless is empty - then it would be filled.
+ * It wil as well switch the player whom is playing at the moment.
+ *
+ * @param[in] N - pointer - to the North array.
+ * @param[in] sizeNorth int - position of stones in North direction.
+ * @param[in] E - pointer - to the East array.
+ * @param[in] sizeEast int - position of stones in East direction.
+ * @param[in] W - pointer - to the West array.
+ * @param[in] sizeWest int - position of stones in West direction.
+ * @param[in] S - pointer - to the South array.
+ * @param[in] sizeSouth int - position of stones in South direction.
+ * @param[in] player  int - 1 for taking player 2, player 2 by 0
+ * @param[in , out] LookUP - 4D array of RESULT - it will assign values into look up table if not exists.
+ * @returns struct - SCORE - the bigger score
+ */
+SCORE getScore(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, int *S, int sizeSouth,
+               int player, RESULT LookUP[MAX_STONES][MAX_STONES][MAX_STONES][MAX_STONES])
 {
-    if(LookUP[sizeWest][sizeSouth][sizeNorth][sizeEast].m_Has == TRUE)
+    /* if we already played that game we return*/
+    if (LookUP[sizeWest][sizeSouth][sizeNorth][sizeEast].m_HasCalculated == TRUE)
     {
         return LookUP[sizeWest][sizeSouth][sizeNorth][sizeEast].m_Score;
     };
-    g_Calls++;
-    SCORE sc4;
-    SCORE sc3;
-    SCORE sc2;
-    SCORE sc1;
-    SCORE tmpBack;
+    SCORE sc4, sc3, sc2, sc1, tmpBack;
     sc1.m_Player1 = INT_MIN;
     sc1.m_Player2 = INT_MIN;
     sc2.m_Player1 = INT_MIN;
@@ -99,100 +147,77 @@ SCORE getScore(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest
     sc3.m_Player2 = INT_MIN;
     sc4.m_Player1 = INT_MIN;
     sc4.m_Player2 = INT_MIN;
+
+    /* The Base case*/
     if (sizeEast == 0 && sizeWest == 0 && sizeNorth == 0 && sizeSouth == 0)
     {
-        g_0Calls++;
         SCORE sc;
         sc.m_Player1 = 0;
         sc.m_Player2 = 0;
         return sc;
     }
 
-    if (player == 1)
+    /* Player switcher */
+    if (player == PLAYER1)
     {
-        player = 0;
+        player = PLAYER2;
     }
     else
     {
-        player = 1;
+        player = PLAYER1;
     }
+
     if (sizeWest > 0)
     {
-        tmpBack = getScore(N, sizeNorth, E, sizeEast, W + 1, sizeWest - 1, S, sizeSouth, player, depth + 1, LookUP);
-
-        if (player)
-        {
-            sc1.m_Player1 = W[0] + tmpBack.m_Player1;
-            sc1.m_Player2 = 0 + tmpBack.m_Player2;
-        }
-        else
-        {
-            sc1.m_Player1 = 0 + tmpBack.m_Player1;
-            sc1.m_Player2 = W[0] + tmpBack.m_Player2;
-        }
-        sc1.m_Move = 'W';
+        tmpBack = getScore(N, sizeNorth, E, sizeEast, W + 1, sizeWest - 1, S, sizeSouth, player, LookUP);
+        sc1 = takeStoneResult(tmpBack, player, W, 'W');
     }
 
     if (sizeNorth > 0)
     {
-        tmpBack = getScore(N + 1, sizeNorth - 1, E, sizeEast, W, sizeWest, S, sizeSouth, player, depth + 1, LookUP);
-
-        if (player)
-        {
-
-            sc2.m_Player1 = N[0] + tmpBack.m_Player1;
-            sc2.m_Player2 = tmpBack.m_Player2;
-        }
-        else
-        {
-            sc2.m_Player2 = N[0] + tmpBack.m_Player2;
-            sc2.m_Player1 = 0 + tmpBack.m_Player1;
-        }
-        sc2.m_Move = 'N';
+        tmpBack = getScore(N + 1, sizeNorth - 1, E, sizeEast, W, sizeWest, S, sizeSouth, player, LookUP);
+        sc2 = takeStoneResult(tmpBack, player, N, 'N');
     }
     if (sizeEast > 0)
     {
-        tmpBack = getScore(N, sizeNorth, E + 1, sizeEast - 1, W, sizeWest, S, sizeSouth, player, depth + 1, LookUP);
-
-        if (player)
-        {
-            sc3.m_Player1 = E[0] + tmpBack.m_Player1;
-            sc3.m_Player2 = 0 + tmpBack.m_Player2;
-        }
-        else
-        {
-            sc3.m_Player1 = 0 + tmpBack.m_Player1;
-            sc3.m_Player2 = E[0] + tmpBack.m_Player2;
-        }
-        sc3.m_Move = 'E';
+        tmpBack = getScore(N, sizeNorth, E + 1, sizeEast - 1, W, sizeWest, S, sizeSouth, player, LookUP);
+        sc3 = takeStoneResult(tmpBack, player, E, 'E');
     }
     if (sizeSouth > 0)
     {
-        tmpBack = getScore(N, sizeNorth, E, sizeEast, W, sizeWest, S + 1, sizeSouth - 1, player, depth + 1, LookUP);
-
-        if (player)
-        {
-            sc4.m_Player1 = S[0] + tmpBack.m_Player1;
-            sc4.m_Player2 = 0 + tmpBack.m_Player2;
-        }
-        else
-        {
-            sc4.m_Player1 = 0 + tmpBack.m_Player1;
-            sc4.m_Player2 = S[0] + tmpBack.m_Player2;
-        }
-        sc4.m_Move = 'S';
+        tmpBack = getScore(N, sizeNorth, E, sizeEast, W, sizeWest, S + 1, sizeSouth - 1, player, LookUP);
+        sc4 = takeStoneResult(tmpBack, player, S, 'S');
     }
 
-    LookUP[sizeWest][sizeSouth][sizeNorth][sizeEast].m_Score= maximumScore(maximumScore(maximumScore(sc3, sc1, player), sc4, player), sc2, player);
-    LookUP[sizeWest][sizeSouth][sizeNorth][sizeEast].m_Has = TRUE;
+    /* compare scores and sing it into look up table*/
+    LookUP[sizeWest][sizeSouth][sizeNorth][sizeEast].m_Score =
+        maximumScore(maximumScore(maximumScore(sc3, sc1, player), sc4, player), sc2, player);
+    LookUP[sizeWest][sizeSouth][sizeNorth][sizeEast].m_HasCalculated = TRUE;
     return LookUP[sizeWest][sizeSouth][sizeNorth][sizeEast].m_Score;
 }
 
-SCORE play(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, int *S, int sizeSouth, int player, int numberOfStones, RESULT LookUP[MAX_STONES][MAX_STONES][MAX_STONES][MAX_STONES])
+/**
+ * Main function for playing, it iterate over all stones.
+ * print moves and then the total score.
+ *
+ * Due to lookup table the game is played just once.
+ * Iteration only need to go and take stones on each iteration.
+ *
+ * @param[in] N - pointer - to the North array.
+ * @param[in] sizeNorth int - position of stones in North direction.
+ * @param[in] E - pointer - to the East array.
+ * @param[in] sizeEast int - position of stones in East direction.
+ * @param[in] W - pointer - to the West array.
+ * @param[in] sizeWest int - position of stones in West direction.
+ * @param[in] S - pointer - to the South array.
+ * @param[in] sizeSouth int - position of stones in South direction.
+ * @param[in] player  int - 1 for taking player 2, player 2 by 0
+ * @param[in , out] LookUP - 4D array of RESULT - it will assign values into look up table if not exists.
+ */
+void play(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, int *S, int sizeSouth, int player, int numberOfStones, RESULT LookUP[MAX_STONES][MAX_STONES][MAX_STONES][MAX_STONES])
 {
-    g_0Calls = 0;
-    g_Calls = 0;
-    int depth = 0;
+    /* round of the game.*/
+    int round = 0;
     SCORE tmpBack;
     int Nshift = 0;
     int Sshift = 0;
@@ -203,15 +228,15 @@ SCORE play(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, in
     int playerB = 0;
     int playerTurn = player;
 
-    emptyResults(LookUP,  sizeNorth,  sizeEast,  sizeWest,  sizeSouth);
+    /* empty look up table. */
+    emptyResults(LookUP, sizeNorth, sizeEast, sizeWest, sizeSouth);
 
-    while (depth <= numberOfStones - 1)
+    while (round < numberOfStones )
     {
         char c = 'A';
         tmpBack = getScore(N + Nshift, sizeNorth - Nshift, E + Eshift, sizeEast - Eshift,
-                           W + Wshift, sizeWest - Wshift, S + Sshift, sizeSouth - Sshift, player, depth, LookUP);
-        // printf("return %d %d %lld move %c\n", tmpBack.m_Player1, tmpBack.m_Player2, g_Calls, tmpBack.m_Move);
-        if (playerTurn == 0)
+                           W + Wshift, sizeWest - Wshift, S + Sshift, sizeSouth - Sshift, player, LookUP);
+        if (playerTurn == PLAYER2)
         {
             c = 'A';
         }
@@ -219,7 +244,7 @@ SCORE play(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, in
         {
             c = 'B';
         }
-        if (depth == 0)
+        if (round == 0)
         {
             playerA = tmpBack.m_Player1;
             playerB = tmpBack.m_Player2;
@@ -229,19 +254,17 @@ SCORE play(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, in
             printf("%c: S[%d] (%d)\n", c, Sshift, S[Sshift]);
             Sshift++;
         }
-        if (tmpBack.m_Move == 'W')
+        else if (tmpBack.m_Move == 'W')
         {
             printf("%c: W[%d] (%d)\n", c, Wshift, W[Wshift]);
             Wshift++;
         }
-
-        if (tmpBack.m_Move == 'E')
+        else if (tmpBack.m_Move == 'E')
         {
             printf("%c: E[%d] (%d)\n", c, Eshift, E[Eshift]);
             Eshift++;
         }
-
-        if (tmpBack.m_Move == 'N')
+        else if (tmpBack.m_Move == 'N')
         {
             printf("%c: N[%d] (%d)\n", c, Nshift, N[Nshift]);
             Nshift++;
@@ -254,13 +277,24 @@ SCORE play(int *N, int sizeNorth, int *E, int sizeEast, int *W, int sizeWest, in
         {
             playerTurn = 1;
         }
-        depth++;
+        round++;
     }
     printf("Celkem A/B: %d/%d\n", playerA, playerB);
 
-    return tmpBack;
+    return;
 }
 
+/**
+ * Read stones values into array.
+ * Helping function ot read the stones.
+ *
+ * It as well check the game setting.
+ * Like MAX_STONE_IN_GAME.
+ *
+ * @param[out] Array int array - holding stones values.
+ * @param[out] size int - how many stones are in array.
+ * @returns TRUE/FALSE - based on success or fail of checks
+ */
 int readStoned(int *Array, int *size)
 {
     char c;
@@ -272,7 +306,6 @@ int readStoned(int *Array, int *size)
         check = scanf(" %c ", &c);
         if (check != 1)
         {
-            // printf("wrong2\n");
             return FALSE;
         }
         if (c == '}')
@@ -281,32 +314,66 @@ int readStoned(int *Array, int *size)
         }
         else if (c == ',')
         {
-        }
-        else
-        {
-            // printf("wrong3\n");
-            return FALSE;
-        }
-        check = scanf(" %d ", &i);
-        if (check != 1)
-        {
-            // printf("wrong4\n");
-            return FALSE;
-        }
-        else
-        {
-            Array[(*size)] = i;
-            if (*size > 32)
+            check = scanf(" %d ", &i);
+            if (check != 1)
             {
                 return FALSE;
             }
-            (*size)++;
+            else
+            {
+                Array[(*size)] = i;
+                if (*size > MAX_STONE_IN_GAME)
+                {
+                    return FALSE;
+                }
+                (*size)++;
+            }
+        }
+        else
+        {
+            return FALSE;
         }
     }
 
     return TRUE;
 }
 
+/**
+ * Results from taking stone to be assigned.
+ * It will as well check, if the direction was not already taken.
+ *
+ *
+ * @param[in] stones int array - holding stones values.
+ * @param[in] size int - how many stones are in array.
+ * @param[in] firstStone int - first stone to be assigned.
+ * @returns TRUE/FALSE - based on success or fail of checks.
+ */
+int checkDirection(int *stones, int *size, int const *firstStone)
+{
+    /* that is the Array was already assigned.*/
+    if (*size > 0)
+        return FALSE;
+    stones[*size] = *firstStone;
+    (*size)++;
+    if (readStoned(stones, size) == FALSE)
+        return FALSE;
+    return TRUE;
+}
+
+/**
+ * Main function to read each Array of stones in every direction.
+ * North - N, West - W, East - E, South - S
+ *
+ * @param[out] N - pointer - to the North array.
+ * @param[out] sizeNorth int pointer - position of stones in North direction.
+ * @param[out] E - pointer - to the East array.
+ * @param[out] sizeEast int pointer - position of stones in East direction.
+ * @param[out] W - pointer - to the West array.
+ * @param[out] sizeWest int pointer- position of stones in West direction.
+ * @param[out] S - pointer - to the South array.
+ * @param[out] sizeSouth int pointer- position of stones in South direction.
+ * @returns struct - SCORE - the new score
+ */
 int readStones(int *N, int *sizeNorth, int *E, int *sizeEast, int *W, int *sizeWest, int *S, int *sizeSouth)
 {
     char c;
@@ -317,74 +384,29 @@ int readStones(int *N, int *sizeNorth, int *E, int *sizeEast, int *W, int *sizeW
 
         int check = scanf("%c : { %d", &c, &i);
         if (check != 2)
-        {
-            // printf("wrong1 %d\n", check);
             return FALSE;
-        }
         if (!(c == 'S' || c == 'W' || c == 'E' || c == 'N'))
-        {
-            // printf("wrong %c\n", c);
             return FALSE;
-        }
-        else
-        {
-            // printf("c is %c", c);
-        }
         if (c == 'S')
         {
-            // printf("%d  south%c\n", *sizeSouth);
-            if (*sizeSouth > 0)
-            {
-                // printf("wrong  south%c\n", c);
+            if (checkDirection(S, sizeSouth, &i) == FALSE)
                 return FALSE;
-            }
-
-            S[*sizeSouth] = i;
-            (*sizeSouth)++;
-            if (readStoned(S, sizeSouth) == FALSE)
-            {
-                return FALSE;
-            };
         }
 
         if (c == 'W')
         {
-            if (*sizeWest > 0)
-            {
+            if (checkDirection(W, sizeWest, &i) == FALSE)
                 return FALSE;
-            }
-            W[*sizeWest] = i;
-            (*sizeWest)++;
-            if (readStoned(W, sizeWest) == FALSE)
-            {
-                return FALSE;
-            };
         }
         if (c == 'E')
         {
-            if (*sizeEast > 0)
-            {
+            if (checkDirection(E, sizeEast, &i) == FALSE)
                 return FALSE;
-            }
-            E[*sizeEast] = i;
-            (*sizeEast)++;
-            if (readStoned(E, sizeEast) == FALSE)
-            {
-                return FALSE;
-            };
         }
         if (c == 'N')
         {
-            if (*sizeNorth > 0)
-            {
+            if (checkDirection(N, sizeNorth, &i) == FALSE)
                 return FALSE;
-            }
-            N[*sizeNorth] = i;
-            (*sizeNorth)++;
-            if (readStoned(N, sizeNorth) == FALSE)
-            {
-                return FALSE;
-            };
         }
         cnt++;
     }
@@ -396,8 +418,10 @@ int readStones(int *N, int *sizeNorth, int *E, int *sizeEast, int *W, int *sizeW
     return TRUE;
 }
 
-
-
+/**
+ * PLay game Stones.
+ * Entry point of the program.
+ */
 int main()
 {
     printf("Zetony:\n");
@@ -406,81 +430,20 @@ int main()
     int South[MAX_STONES];
     int East[MAX_STONES];
     int West[MAX_STONES];
-
-    //     int (*data)[dataFilter][dataWidth][dataHeight];
-    // data = malloc(dataNumber*sizeof(*data));
-
     int westNumber = 0;
     int southNumber = 0;
     int northNumber = 0;
     int eastNumber = 0;
-
-    // printf("Zetony1:\n");
     if (readStones(North, &northNumber, East, &eastNumber, West, &westNumber, South, &southNumber) == FALSE)
     {
         printf("Nespravny vstup.\n");
-        return 0;
+        return EXIT_SUCCESS;
     }
-    RESULT(*LookUP)[MAX_STONES][MAX_STONES][MAX_STONES] = NULL;
-    LookUP = (RESULT (*)[50][50][50])malloc(MAX_STONES * sizeof(*LookUP));
+    RESULT(*LookUP)
+    [MAX_STONES][MAX_STONES][MAX_STONES] = NULL;
+    LookUP = (RESULT(*)[50][50][50])malloc(MAX_STONES * sizeof(*LookUP));
     int numberOfStones = westNumber + southNumber + northNumber + eastNumber;
-    play(North, northNumber, East, eastNumber, West, westNumber, South, southNumber, 0, numberOfStones, LookUP);
+    play(North, northNumber, East, eastNumber, West, westNumber, South, southNumber, PLAYER2, numberOfStones, LookUP);
     free(LookUP);
-    // int N[] = {1, 2};
-    // int W[] = {5};
-    // int E[] = {1, 1, 1};
-    // int S[] = {1, 7};
-    // int numberOfStones = 8;
-    // //
-
-    // // max.m_Player1 = INT_MIN;
-    // // max.m_Player2 = INT_MIN;
-    // // int N[] = {1, 5000, 500};
-    // // int W[] = {5, 4, 10};
-    // // int E[] = {2};
-    // // int S[] = {3};
-    // // SCORE sc = getScore(N, 1, E, 1, W, 1, S, 1, 0, &max);
-    // // SCORE sc1 =  getScore(N, 1, E, 1, W, 1, S, 1, 1);
-    // // SCORE sc =  getScore(N, 2, E, 3, W, 1, S, 2, 0, &max);
-    // // printf("max 1: %d  2: %d calls: %lld\n", max.m_Player1, max.m_Player2, g_Calls);
-    // // sc = getScore(N, 2, E, 0, W, 2, S, 0, 0, &max);
-    // // printf("max 1: %d  2: %d calls: %lld\n", max.m_Player1, max.m_Player2, g_Calls);
-
-    // // printf("return %d %d %lld move %c\n", sc.m_Player1, sc.m_Player2, g_Calls, sc.m_Move);
-    // //  sc = play(N, 2, E, 3, W, 1, S + 1, 2 - 1, 0);
-    // //  printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
-    // //  sc = play(N, 2, E, 3, W, 1, S + 2, 2 - 2, 1);
-    // //  printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
-    // //  sc = play(N, 2, E, 3, W+1, 1-1, S + 2, 2 - 2, 1);
-    // //  printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
-
-    // int NN[] = {-66, -52, 109};
-    // int WW[] = {78};
-    // int EE[] = {118, 146, 46, 77};
-    // int SS[] = {67, 159, -13};
-    // numberOfStones = 11;
-    // sc = play(NN, 3, EE, 4, WW, 1, SS, 3, 0,numberOfStones);
-    // //  printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
-    // //      sc =  getScore(NN, 3, EE+1, 3, WW, 1, SS, 3, 1, &max);
-    // //  printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
-    // //      sc =  getScore(NN, 3, EE, 4, WW+1, 0, SS, 3, 1, &max);
-    // //  printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
-    // //      sc =  getScore(NN, 3, EE, 4, WW, 1, SS+1, 2, 1, &max);
-    // //  printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
-
-    // int NNN[] = {1, 2};
-    // int WWW[] = {3, 5};
-    // int EEE[] = {9, 1, 1, 1};
-    // int SSS[] = {1, 7};
-    // // sc = play(NNN, 2, EEE, 4, WWW, 2, SSS, 2, 1);
-    // // printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
-
-    // int NNNN[] = {1, 2, -4};
-    // int EEEE[] = {9, 1, 1};
-    // int WWWW[] = {3, 5, -2};
-    // int SSSS[] = {1, 7};
-    // sc = play(NNNN, 3, EEEE, 3, WWWW, 3, SSSS, 2, 1);
-    // printf("return %d %d %lld\n", sc.m_Player1, sc.m_Player2, g_Calls);
-
-    //   printf("%d %d\n", sc1.m_Player1, sc1.m_Player2);
+    return EXIT_SUCCESS;
 }
